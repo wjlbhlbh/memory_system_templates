@@ -9,16 +9,16 @@
 - AGENTS.md 研究提醒：上下文文件并非越多越好，过度规则会增加成本并可能降低任务成功率，因此本项目应坚持“短启动、强索引、按需展开”。参考：https://arxiv.org/abs/2602.11988
 
 ## 当前定位
-本项目不是单一 prompt，而是一套面向 AI 编程协作的项目记忆模板：
-- Lite：低维护成本，适合小项目、脚本、Demo。
-- Pro：完整工程记忆，适合长期项目、全栈项目、多人协作。
+本项目不是单一 prompt，而是一套面向 AI 编程协作的 Pro 级项目记忆模板：
+- Pro：完整工程记忆，适合真实开发项目、长期项目、全栈项目、多人协作。
+- 小项目也使用 Pro，只少填非必要字段，避免 Lite/Pro 分叉导致规则漂移。
 - Tool adapters：为 Codex、Claude Code、OpenCode、Antigravity、Cursor、Cline、Roo Code 等工具生成入口文件。
 
 ## 已完成的升格动作
 - 统一 Agent 可读文件为 UTF-8 无 BOM，降低 LLM 和工具读取异常概率。
 - 增加无需外部依赖的验证脚本 `tests/verify-memory-system.ps1`。
 - 增加 `.editorconfig`、`.gitattributes`、`.gitignore`，固定编码、换行与运行产物边界。
-- 把“减少打扰的一口气交付”“自动提交推送”“源码与本地备份分层”写入 Lite/Pro 规则。
+- 把“减少打扰的一口气交付”“自动提交推送”“源码与本地备份分层”写入 Pro 规则。
 - 增加基础开源文件：`LICENSE`、`CONTRIBUTING.md`、`SECURITY.md`、`CHANGELOG.md`。
 - 增加 GitHub Actions CI，自动验证模板完整性与编码规范。
 
@@ -37,7 +37,7 @@
    - 展示“新会话读取记忆 -> 修改代码 -> 验证 -> 更新 progress -> 自动提交”的闭环。
 
 4. 控制上下文成本
-   - 保持 Lite 足够短。
+   - 不再维护 Lite 简版，避免双模板漂移。
    - Pro 文件超过 150 行时引导归档。
    - 新规则优先写进 `agentRules.md`，避免到处散落重复指令。
 

@@ -1,5 +1,5 @@
 ﻿param(
-    [ValidateSet("Lite", "Pro")]
+    [ValidateSet("Pro")]
     [string]$Mode = "Pro",
     [string]$TargetPath = ".",
     [string]$ProjectName = "",
@@ -222,7 +222,7 @@ function Detect-VersionRequirements {
 
 $scriptRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
 $resolvedTarget = (Resolve-Path $TargetPath).Path
-$templateName = if ($Mode -eq "Pro") { ".ai_memory-pro" } else { ".ai_memory-lite" }
+$templateName = ".ai_memory-pro"
 $templatePath = Join-Path $scriptRoot $templateName
 $destination = Join-Path $resolvedTarget ".ai_memory"
 
@@ -325,7 +325,7 @@ $todo = @"
 初始化时间：$dateText
 项目名称：$ProjectName
 项目路径：$resolvedTarget
-模板模式：$Mode
+模板模式：Pro
 工具适配器：$Adapter
 
 ## 只需要优先补这些
@@ -334,11 +334,10 @@ $todo = @"
    - 不需要反复维护“Windows / PowerShell / 个人机器版本”这类稳定宿主机信息
    - 只有项目明确依赖某个运行时或工具链版本时，才补对应版本要求
    - 若脚本已识别出版本要求，优先核对其来源是否符合项目真实约束
-3. 如果是 Pro 模板：
-   - 补 interfaces.md 中最关键的 1-3 个接口
-   - 补 architecture.md 中总体架构与核心模块
-4. 默认推荐保留根目录 `AGENTS.md` 和 `CLAUDE.md`，避免后续切换工具时忘记补入口文件
-5. 如果你没有使用 `-Adapter` 自动生成入口文件，再从 `tool_adapters/` 里选择对应模板手工复制到项目根目录
+3. 补 interfaces.md 中最关键的 1-3 个接口
+4. 补 architecture.md 中总体架构与核心模块
+5. 默认推荐保留根目录 `AGENTS.md` 和 `CLAUDE.md`，避免后续切换工具时忘记补入口文件
+6. 如果你没有使用 `-Adapter` 自动生成入口文件，再从 `tool_adapters/` 里选择对应模板手工复制到项目根目录
 
 ## 可以后补的
 - decisionLog.md

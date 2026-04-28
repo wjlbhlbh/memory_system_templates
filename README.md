@@ -17,7 +17,7 @@ AI 编程最常见的失控点不是“不会写代码”，而是上下文断�
 ## 最少人工步骤
 
 推荐直接运行根目录脚本 `init-memory.ps1`，它会自动：
-- 复制 `Lite` 或 `Pro` 模板到目标项目根目录
+- 复制 Pro 模板到目标项目根目录
 - 自动写入项目名、项目路径、当前日期、操作系统、默认终端
 - 自动探测常见技术栈线索（如 `package.json`、`requirements.txt`、`pyproject.toml`、`pom.xml`、`Cargo.toml`）
 - 自动从项目文件中提取常见运行时版本要求（如 `.python-version`、`pyproject.toml`、`package.json engines`、`.nvmrc`、`Dockerfile`、`pom.xml`、`rust-toolchain`）
@@ -29,22 +29,16 @@ AI 编程最常见的失控点不是“不会写代码”，而是上下文断�
 
 ## 模板说明
 
-### `.ai_memory-lite`
-- 适合 1 人项目、小工具、脚本、验证型项目
-- 重点解决：跨会话不断片、当前任务不丢、最小验证闭环
-- 优点：轻、快、维护成本低
-- 缺点：不适合长期复杂项目沉淀大量决策
-
 ### `.ai_memory-pro`
-- 适合长期真实开发项目、多人协作项目、全栈项目、需要交接的项目
+- 适合真实开发项目、长期项目、多人协作项目、全栈项目、需要交接的项目
 - 重点解决：断点接管、长期决策追踪、待办债务收敛、接口漂移控制、踩坑复发控制
-- 优点：完整、稳定、适合长期积累
-- 缺点：维护成本高于 Lite
+- 优点：完整、稳定、适合长期积累；避免简版/专业版分叉造成维护漂移
+- 取舍：小项目也默认使用 Pro，但只维护必要字段即可
 
 ## 推荐选择
-- 单文件脚本、小型 Demo：用 `Lite`
-- 有后端 / 前端 / 数据库 / 部署 / 测试链路：用 `Pro`
-- 你自己的长期商业项目：优先用 `Pro`
+- 所有新项目默认使用 Pro。
+- 单文件脚本、小型 Demo 可以少填字段，但不再维护单独简版模板。
+- 有后端 / 前端 / 数据库 / 部署 / 测试链路或长期商业项目时，完整维护 Pro 文件。
 
 ## 工具接入
 `tool_adapters/` 目录里提供了不同 AI 工具的入口模板。核心思想一致：
@@ -90,12 +84,6 @@ AI 编程最常见的失控点不是“不会写代码”，而是上下文断�
 powershell -ExecutionPolicy Bypass -File D:\AIbiancheng\memory_system_templates\init-memory.ps1 -Mode Pro
 ```
 
-或：
-
-```powershell
-powershell -ExecutionPolicy Bypass -File D:\AIbiancheng\memory_system_templates\init-memory.ps1 -Mode Lite
-```
-
 默认情况下，脚本会自动生成 `AGENTS.md` 和 `CLAUDE.md` 两个常用入口文件：
 
 ```powershell
@@ -126,7 +114,7 @@ powershell -ExecutionPolicy Bypass -File D:\AIbiancheng\memory_system_templates\
 ```
 
 ## 如果不想用脚本
-你也可以手动复制 `Lite` 或 `Pro` 到项目根目录并重命名为 `.ai_memory`，但这会增加人工维护量，不建议作为默认方式。
+你也可以手动复制 `.ai_memory-pro` 到项目根目录并重命名为 `.ai_memory`，但这会增加人工维护量，不建议作为默认方式。
 
 ## 一口气开发模式
 
@@ -146,7 +134,7 @@ powershell -ExecutionPolicy Bypass -File D:\AIbiancheng\memory_system_templates\
 
 本仓库提供一个无需外部依赖的验证脚本，用来检查：
 - Agent 可读文件是否为严格 UTF-8 无 BOM。
-- Lite/Pro 的 `index.json` 是否能解析。
+- Pro 的 `index.json` 是否能解析。
 - `bootstrap_order` 是否引用了真实存在的文件。
 - `init-memory.ps1` 和 `sync-tool-adapters.ps1` 生成的文件是否符合编码要求。
 

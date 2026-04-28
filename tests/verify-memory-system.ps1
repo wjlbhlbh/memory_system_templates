@@ -63,7 +63,7 @@ foreach ($file in $agentReadableFiles) {
 }
 
 Write-Output "Checking memory indexes..."
-Assert-IndexIsComplete (Join-Path $Root ".ai_memory-lite")
+Assert-True (-not (Test-Path (Join-Path $Root ".ai_memory-lite"))) "Lite template should not exist in Pro-only mode."
 Assert-IndexIsComplete (Join-Path $Root ".ai_memory-pro")
 
 $tempRoot = Join-Path ([System.IO.Path]::GetTempPath()) ("memory-system-test-" + [guid]::NewGuid().ToString("N"))
@@ -81,6 +81,17 @@ try {
     }
 
     Get-Content -Raw -Encoding UTF8 (Join-Path $tempRoot ".ai_memory\index.json") | ConvertFrom-Json | Out-Null
+
+    Write-Output "Checking Lite mode is unavailable..."
+    $liteRoot = Join-Path $tempRoot "lite"
+    New-Item -ItemType Directory -Path $liteRoot | Out-Null
+    $liteRejected = $false
+    try {
+        & (Join-Path $Root "init-memory.ps1") -Mode Lite -TargetPath $liteRoot -ProjectName "LiteTest" -Adapter None | Out-Null
+    } catch {
+        $liteRejected = $_.Exception.Message -match "Cannot validate argument"
+    }
+    Assert-True $liteRejected "Lite mode should be rejected."
 
     Write-Output "Checking sync-tool-adapters.ps1 output..."
     $syncRoot = Join-Path $tempRoot "sync"

@@ -4,7 +4,7 @@
 
 ## 开发前
 1. 阅读 `README.md` 和 `docs/OPEN_SOURCE_UPGRADE.md`。
-2. 如果修改模板内容，优先保持 Lite 简短、Pro 完整。
+2. 如果修改模板内容，统一维护 `.ai_memory-pro`，不要重新引入 Lite/Pro 双模板分叉。
 3. 不要把本地备份、日志、数据库、缓存或测试输出提交到仓库。
 
 ## 质量要求
