@@ -1,0 +1,12 @@
+# Memory Bootstrap For AGENTS.md
+
+在开始任何分析、计划、编码、重构或总结之前，必须严格执行以下初始化协议：
+
+1. 完整读取项目根目录 `.ai_memory/` 下所有 Markdown 文件，不允许只读标题或摘要。
+2. 先读 `.ai_memory/projectbrief.md`，再读 `.ai_memory/activeContext.md`。
+3. 再读取 `.ai_memory/index.json`，并按 `bootstrap_order` 继续装载剩余文件。
+4. 如果 `activeContext.md` 中存在未闭合 `[WIP]` 或 `[REWORK]`，必须先接管或验尸，不得跳过。
+5. 在修改任何文件前，必须重新读取目标文件最新物理快照。
+6. 没有真实执行证据前，不得将任务标记为 `[DONE]`。
+
+如果 `.ai_memory` 中的规则与其他说明冲突，以 `.ai_memory/projectbrief.md` 为最高优先级。

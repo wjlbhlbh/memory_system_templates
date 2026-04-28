@@ -1,0 +1,44 @@
+{
+  "version": "1.0.0",
+  "memory_system": "professional-project-memory",
+  "bootstrap_order": [
+    "projectbrief.md",
+    "activeContext.md",
+    "index.json",
+    "agentRules.md",
+    "systemPatterns.md",
+    "techContext.md",
+    "decisionLog.md",
+    "backlog.md",
+    "pitfalls.md",
+    "interfaces.md",
+    "progress.md",
+    "architecture.md"
+  ],
+  "required_before_work": [
+    "Read all Markdown files under .ai_memory in full.",
+    "Read projectbrief.md first and activeContext.md second.",
+    "Check activeContext.md for any open [WIP], [AWAITING_QA], or [REWORK] item.",
+    "Classify the task as L0/L1/L2/L3 before execution.",
+    "Use reduce-interruption mode: make conservative assumptions for non-critical decisions and continue unless a hard blocker exists.",
+    "Stop at the plan stage and ask for confirmation before any L2/L3 or other high-risk action.",
+    "Read the latest physical snapshot of every target file before editing.",
+    "Separate confirmed facts, grounded inferences, and open questions in working notes or final conclusions.",
+    "Do not mark work as complete without execution evidence.",
+    "After verified completion, commit and push source changes with a clear Chinese commit message when the repository, remote, and permissions are available.",
+    "Keep local backups under .archive/ and keep runtime artifacts ignored by Git."
+  ],
+  "file_roles": {
+    "projectbrief.md": "Business charter, scope, goals, hard constraints, risk areas, and compatibility boundaries.",
+    "activeContext.md": "Current state, task grading, active lock, next action, blockers, validation plan, and execution evidence.",
+    "agentRules.md": "Mandatory agent behavior rules, risk protocol, editing discipline, and completion protocol.",
+    "systemPatterns.md": "Stable system-wide engineering conventions and design norms.",
+    "techContext.md": "Environment, stack, commands, and operational constraints.",
+    "decisionLog.md": "Long-term decisions, rationale, rejected alternatives, and rollback notes.",
+    "backlog.md": "Open debts, pending regressions, future work, and documentation tasks.",
+    "pitfalls.md": "Known traps, invalid assumptions, and previously failed approaches.",
+    "interfaces.md": "Critical API, schema, auth, and data contract summaries.",
+    "progress.md": "Verified milestones, completion evidence, residual risk notes, and archived history.",
+    "architecture.md": "System structure, module ownership, data flow, and boundary map."
+  }
+}

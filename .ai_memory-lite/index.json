@@ -1,0 +1,30 @@
+{
+  "version": "1.0.0",
+  "memory_system": "lite-project-memory",
+  "bootstrap_order": [
+    "projectbrief.md",
+    "activeContext.md",
+    "index.json",
+    "agentRules.md",
+    "techContext.md",
+    "progress.md"
+  ],
+  "required_before_work": [
+    "Read all Markdown files under .ai_memory in full.",
+    "Read projectbrief.md first and activeContext.md second.",
+    "Check activeContext.md for open [WIP] or [REWORK] items.",
+    "Classify the task as L0/L1/L2/L3 before execution.",
+    "Use reduce-interruption mode: make conservative assumptions for non-critical decisions and continue unless a hard blocker exists.",
+    "Stop and ask for confirmation before high-risk work such as data, auth, public API, deploy, or irreversible changes.",
+    "Read the latest snapshot of any target file before editing.",
+    "After verified completion, commit and push source changes with a clear Chinese commit message when the repository, remote, and permissions are available.",
+    "Keep local backups under .archive/ and keep runtime artifacts ignored by Git."
+  ],
+  "file_roles": {
+    "projectbrief.md": "Project objective, scope, business success criteria, hard constraints, and high-risk boundaries.",
+    "activeContext.md": "Current task state, risk grading, lock, next action, blockers, and verification evidence.",
+    "agentRules.md": "AI behavior rules, task grading, editing discipline, completion protocol, and handoff contract.",
+    "techContext.md": "Stack, commands, environment assumptions, and runtime constraints.",
+    "progress.md": "Verified completed work, evidence summaries, residual risks, and compact milestone history."
+  }
+}

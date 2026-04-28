@@ -1,0 +1,41 @@
+# Local backups
+.archive/
+
+# Runtime artifacts
+logs/
+*.log
+*.trace
+*.pid
+
+# Local databases
+*.db
+*.sqlite
+*.sqlite3
+*.sqlite-journal
+
+# Caches and temporary files
+.cache/
+cache/
+.tmp/
+tmp/
+tmp-*/
+*.tmp
+*.bak
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+
+# Dependency folders
+node_modules/
+vendor/
+.venv/
+venv/
+__pycache__/
+
+# OS/editor noise
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

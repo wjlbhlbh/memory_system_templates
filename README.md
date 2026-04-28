@@ -1,0 +1,165 @@
+# AI Memory System Templates
+
+这套模板用于给新项目初始化 `.ai_memory`，目标不是只提供目录结构，而是提供一套可直接复用的规则内容设计。
+
+## 它解决什么问题
+
+AI 编程最常见的失控点不是“不会写代码”，而是上下文断片、文件没读全、凭印象改代码、没有验证就宣称完成、换工具后没人知道上次做到哪。
+
+本项目把这些协作纪律沉淀为一套轻量模板：
+- 新会话先读 `.ai_memory/index.json` 与关键 Markdown。
+- 任务按 L0/L1/L2/L3 分级，明确哪些能自动推进、哪些必须确认。
+- 每次完成都要有真实验证证据，并同步 `progress.md`。
+- 默认支持“减少打扰的一口气交付”：小决策由 Agent 保守判断，除硬性阻塞外持续推进。
+- 默认执行源码提交与本地备份分层：源码进 Git，备份进 `.archive/`，运行产物进 `.gitignore`。
+- Agent 可读文件统一使用 UTF-8 无 BOM，降低跨工具读取或写入异常概率。
+
+## 最少人工步骤
+
+推荐直接运行根目录脚本 `init-memory.ps1`，它会自动：
+- 复制 `Lite` 或 `Pro` 模板到目标项目根目录
+- 自动写入项目名、项目路径、当前日期、操作系统、默认终端
+- 自动探测常见技术栈线索（如 `package.json`、`requirements.txt`、`pyproject.toml`、`pom.xml`、`Cargo.toml`）
+- 自动从项目文件中提取常见运行时版本要求（如 `.python-version`、`pyproject.toml`、`package.json engines`、`.nvmrc`、`Dockerfile`、`pom.xml`、`rust-toolchain`）
+- 生成 `.ai_memory/SETUP_TODO.md`，把你真正还需要补的内容压缩成少量条目
+
+这样你不需要自己逐个文件手工改一遍。
+稳定不变的宿主机信息默认只在初始化时自动写入一次，不要求你在每个新项目里反复手填或维护。
+像“Windows / PowerShell”这类信息只是运行背景；像 Python 版本、Node 版本这类信息，只有在项目对版本敏感时才值得记录，而且应优先记录项目要求，不是你个人机器的全局安装情况。
+
+## 模板说明
+
+### `.ai_memory-lite`
+- 适合 1 人项目、小工具、脚本、验证型项目
+- 重点解决：跨会话不断片、当前任务不丢、最小验证闭环
+- 优点：轻、快、维护成本低
+- 缺点：不适合长期复杂项目沉淀大量决策
+
+### `.ai_memory-pro`
+- 适合长期真实开发项目、多人协作项目、全栈项目、需要交接的项目
+- 重点解决：断点接管、长期决策追踪、待办债务收敛、接口漂移控制、踩坑复发控制
+- 优点：完整、稳定、适合长期积累
+- 缺点：维护成本高于 Lite
+
+## 推荐选择
+- 单文件脚本、小型 Demo：用 `Lite`
+- 有后端 / 前端 / 数据库 / 部署 / 测试链路：用 `Pro`
+- 你自己的长期商业项目：优先用 `Pro`
+
+## 工具接入
+`tool_adapters/` 目录里提供了不同 AI 工具的入口模板。核心思想一致：
+
+1. 任何新会话必须先读取 `.ai_memory/index.json`
+2. 再按 `bootstrap_order` 完整读取记忆文件
+3. 没有完成初始化前，不允许进入编码或计划阶段
+
+不是把整个 `tool_adapters/` 文件夹复制进新项目。
+默认推荐做法是：在项目根目录同时准备好 `AGENTS.md` 和 `CLAUDE.md`，把常见工具入口一次配齐。
+这样后面切到 Codex、OpenCode、Antigravity、Claude Code 时，不需要再想起手工补入口文件。
+
+### 常见工具与生效位置
+
+| 工具 | 模板文件 | 新项目中实际文件名 | 放置位置 | 说明 |
+|---|---|---|---|---|
+| Codex | `tool_adapters/CODEX.template.md` | `AGENTS.md` | 仓库根目录 | Codex 使用 `AGENTS.md` |
+| OpenCode | `tool_adapters/OPENCODE.template.md` | `AGENTS.md` | 仓库根目录 | OpenCode 使用 `AGENTS.md` |
+| Antigravity | `tool_adapters/ANTIGRAVITY.template.md` | `AGENTS.md` | 仓库根目录 | 当前公开资料显示可走 `AGENTS.md` |
+| 通用 AGENTS 生态工具 | `tool_adapters/AGENTS.md.template` | `AGENTS.md` | 仓库根目录 | 适用于支持 AGENTS.md 的工具 |
+| Claude Code | `tool_adapters/CLAUDE.md.template` | `CLAUDE.md` | 仓库根目录 | Claude Code 的项目级入口文件 |
+| Cursor | `tool_adapters/CURSOR.template.md` | 按 Cursor 项目规则入口落地 | 通常在仓库根目录 | 这里提供的是接入提示模板 |
+| Cline | `tool_adapters/CLINE.template.md` | 按 Cline 项目规则入口落地 | 通常在仓库根目录 | 这里提供的是接入提示模板 |
+| Roo Code | `tool_adapters/ROO_CODE.template.md` | 按 Roo Code 项目规则入口落地 | 通常在仓库根目录 | 这里提供的是接入提示模板 |
+
+### 最简单的使用方式
+
+1. 先运行 `init-memory.ps1` 生成 `.ai_memory/`
+2. 默认让脚本同时生成 `AGENTS.md` 和 `CLAUDE.md`
+3. 只有你明确想精简时，才只生成单个入口文件
+
+例如：
+
+- 用默认推荐方式：运行初始化脚本，不额外传 `-Adapter`，会自动生成 `AGENTS.md` 和 `CLAUDE.md`
+- 用 Codex / OpenCode / Antigravity 专用方式：传 `-Adapter CODEX` 或 `-Adapter OPENCODE` 或 `-Adapter ANTIGRAVITY`
+- 用 Claude Code 专用方式：传 `-Adapter CLAUDE`
+
+## 使用方式
+1. 进入新项目根目录
+2. 运行：
+
+```powershell
+powershell -ExecutionPolicy Bypass -File D:\AIbiancheng\memory_system_templates\init-memory.ps1 -Mode Pro
+```
+
+或：
+
+```powershell
+powershell -ExecutionPolicy Bypass -File D:\AIbiancheng\memory_system_templates\init-memory.ps1 -Mode Lite
+```
+
+默认情况下，脚本会自动生成 `AGENTS.md` 和 `CLAUDE.md` 两个常用入口文件：
+
+```powershell
+powershell -ExecutionPolicy Bypass -File D:\AIbiancheng\memory_system_templates\init-memory.ps1 -Mode Pro
+```
+
+如果你想只生成某一个工具入口文件，也可以显式指定 `-Adapter`：
+
+```powershell
+powershell -ExecutionPolicy Bypass -File D:\AIbiancheng\memory_system_templates\init-memory.ps1 -Mode Pro -Adapter CODEX
+```
+
+或：
+
+```powershell
+powershell -ExecutionPolicy Bypass -File D:\AIbiancheng\memory_system_templates\init-memory.ps1 -Mode Pro -Adapter CLAUDE
+```
+
+3. 打开新生成的 `.ai_memory/SETUP_TODO.md`
+4. 只补最少几个业务字段
+5. 默认情况下，项目根目录已经自动生成 `AGENTS.md` 和 `CLAUDE.md`
+6. 如果是老项目或你想补入口文件，可运行 `sync-tool-adapters.ps1`
+
+例如：
+
+```powershell
+powershell -ExecutionPolicy Bypass -File D:\AIbiancheng\memory_system_templates\sync-tool-adapters.ps1 -TargetPath .
+```
+
+## 如果不想用脚本
+你也可以手动复制 `Lite` 或 `Pro` 到项目根目录并重命名为 `.ai_memory`，但这会增加人工维护量，不建议作为默认方式。
+
+## 一口气开发模式
+
+你可以把下面这段作为默认任务风格，模板里的 `agentRules.md` 已经内置同类规则，不需要每次重复强调：
+
+```text
+不用再向我确认小决策，你自行做合理假设并继续推进。
+先读 .ai_memory 和相关文件，再按计划逐项实现。
+修改代码、补测试、运行验证、更新 progress.md 一次做完。
+除非遇到无法自行解决的硬性阻塞，例如缺少密钥、外部平台权限、必须人工扫码/发布、生产不可逆操作，否则不要停下来问我。
+完成后给我最终总结：改了什么、验证结果、哪些产品判断由你代做、还剩什么需要我手工确认。
+默认以“减少打扰优先”模式工作，遇到非关键分支直接替我做产品判断。
+严禁对其他板块、页面、接口或已有流程造成影响。
+```
+
+## 质量验证
+
+本仓库提供一个无需外部依赖的验证脚本，用来检查：
+- Agent 可读文件是否为严格 UTF-8 无 BOM。
+- Lite/Pro 的 `index.json` 是否能解析。
+- `bootstrap_order` 是否引用了真实存在的文件。
+- `init-memory.ps1` 和 `sync-tool-adapters.ps1` 生成的文件是否符合编码要求。
+
+运行：
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\tests\verify-memory-system.ps1
+```
+
+GitHub Actions 也会运行同一套验证。
+
+## 开源化路线
+
+本项目已补充 `LICENSE`、`CONTRIBUTING.md`、`SECURITY.md`、`CHANGELOG.md`、CI 与开源升级建议。详细路线见：
+
+- `docs/OPEN_SOURCE_UPGRADE.md`

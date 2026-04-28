@@ -1,0 +1,17 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  verify:
+    name: Verify memory templates
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run verification
+        shell: powershell
+        run: powershell -ExecutionPolicy Bypass -File .\tests\verify-memory-system.ps1
