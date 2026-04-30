@@ -2,10 +2,10 @@
 
 This project uses a local memory bank under `.ai_memory`.
 
-Mandatory startup sequence:
-1. Read every Markdown file under `.ai_memory`.
-2. Read `projectbrief.md` first and `activeContext.md` second.
-3. Read `index.json` and follow its `bootstrap_order`.
-4. Continue any unresolved `[WIP]` or `[REWORK]` state before starting new work.
+Mandatory Fast startup sequence:
+1. Read `.ai_memory/index.json` first.
+2. Read only the files listed in `startup_order`.
+3. Load non-startup memory files only when relevant to the current task, touched module, interface, architecture, decision, backlog item, pitfall, or verification need.
+4. Continue any real unresolved `[WIP]`, `[AWAITING_QA]`, or `[REWORK]` state before starting new work. If state is `[IDLE]` or an empty template, proceed with the current task.
 5. Re-read physical target files before editing.
 6. Require execution evidence before `[DONE]`.

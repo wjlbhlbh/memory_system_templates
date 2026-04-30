@@ -49,6 +49,37 @@ function Assert-IndexIsComplete {
         $entryPath = Join-Path $MemoryPath $entry
         Assert-True (Test-Path $entryPath) "bootstrap_order references missing file: $entryPath"
     }
+
+    Assert-True ($index.startup_order.Count -gt 0) "index.json must define startup_order for fast startup."
+    foreach ($entry in $index.startup_order) {
+        $entryPath = Join-Path $MemoryPath $entry
+        Assert-True (Test-Path $entryPath) "startup_order references missing file: $entryPath"
+    }
+
+    $requiredText = ($index.required_before_work -join "`n")
+    Assert-True ($requiredText -notmatch "Read all Markdown files under \.ai_memory in full") "Startup rules must not require reading every Markdown file in full."
+    Assert-True ($requiredText -match "Load non-startup memory files only when relevant") "Startup rules must explicitly defer non-startup files until relevant."
+}
+
+function Assert-FastStartupRules {
+    param([string]$Root)
+
+    $activeContext = Get-Content -Raw -Encoding UTF8 (Join-Path $Root ".ai_memory-pro\activeContext.md")
+    Assert-True ($activeContext -notmatch "\[WIP\]") "activeContext.md must not contain template WIP markers."
+    Assert-True ($activeContext -match "\[IDLE\]") "activeContext.md should start from an explicit IDLE state."
+
+    $agentRules = Get-Content -Raw -Encoding UTF8 (Join-Path $Root ".ai_memory-pro\agentRules.md")
+    Assert-True ($agentRules -notmatch "all Markdown files|every Markdown file") "agentRules.md must not require full memory reads on every startup."
+    Assert-True ($agentRules -match "Fast startup") "agentRules.md must describe the fast startup protocol."
+    Assert-True ($agentRules -match "L1[\s\S]*direct execution") "L1 tasks should default to direct execution without waiting for confirmation."
+    Assert-True ($agentRules -match "demand-driven") "Memory writes should be demand-driven, not mandatory for every file."
+
+    $adapterFiles = Get-ChildItem -Path (Join-Path $Root "tool_adapters") -File
+    foreach ($adapter in $adapterFiles) {
+        $adapterText = Get-Content -Raw -Encoding UTF8 $adapter.FullName
+        Assert-True ($adapterText -notmatch "Read every Markdown file under `.ai_memory/` in full|all Markdown files|every Markdown file") "$($adapter.Name) must not require full Markdown reads."
+        Assert-True ($adapterText -match "startup_order|Fast startup|fast startup") "$($adapter.Name) must point agents to the fast startup flow."
+    }
 }
 
 Write-Output "Checking repository text encodings..."
@@ -65,6 +96,7 @@ foreach ($file in $agentReadableFiles) {
 Write-Output "Checking memory indexes..."
 Assert-True (-not (Test-Path (Join-Path $Root ".ai_memory-lite"))) "Lite template should not exist in Pro-only mode."
 Assert-IndexIsComplete (Join-Path $Root ".ai_memory-pro")
+Assert-FastStartupRules $Root
 
 $tempRoot = Join-Path ([System.IO.Path]::GetTempPath()) ("memory-system-test-" + [guid]::NewGuid().ToString("N"))
 New-Item -ItemType Directory -Path $tempRoot | Out-Null

@@ -7,7 +7,8 @@
 AI 编程最常见的失控点不是“不会写代码”，而是上下文断片、文件没读全、凭印象改代码、没有验证就宣称完成、换工具后没人知道上次做到哪。
 
 本项目把这些协作纪律沉淀为一套轻量模板：
-- 新会话先读 `.ai_memory/index.json` 与关键 Markdown。
+- 新会话先读 `.ai_memory/index.json`，再只读 `startup_order` 指定的启动文件。
+- 其他记忆文件按任务需要再读取，避免每次启动都消耗大量上下文。
 - 任务按 L0/L1/L2/L3 分级，明确哪些能自动推进、哪些必须确认。
 - 每次完成都要有真实验证证据，并同步 `progress.md`。
 - 默认支持“减少打扰的一口气交付”：小决策由 Agent 保守判断，除硬性阻塞外持续推进。
@@ -44,8 +45,9 @@ AI 编程最常见的失控点不是“不会写代码”，而是上下文断�
 `tool_adapters/` 目录里提供了不同 AI 工具的入口模板。核心思想一致：
 
 1. 任何新会话必须先读取 `.ai_memory/index.json`
-2. 再按 `bootstrap_order` 完整读取记忆文件
-3. 没有完成初始化前，不允许进入编码或计划阶段
+2. 再读取 `startup_order` 中列出的启动文件
+3. 其他记忆文件只在与当前任务、目标模块、接口、架构、历史决策、待办、踩坑或验证路径相关时按需读取
+4. 完成快速启动后，L0/L1 任务应直接进入实质开发，只有 L2/L3 或硬性阻塞才停下来确认
 
 不是把整个 `tool_adapters/` 文件夹复制进新项目。
 默认推荐做法是：在项目根目录同时准备好 `AGENTS.md` 和 `CLAUDE.md`，把常见工具入口一次配齐。
@@ -122,8 +124,8 @@ powershell -ExecutionPolicy Bypass -File D:\AIbiancheng\memory_system_templates\
 
 ```text
 不用再向我确认小决策，你自行做合理假设并继续推进。
-先读 .ai_memory 和相关文件，再按计划逐项实现。
-修改代码、补测试、运行验证、更新 progress.md 一次做完。
+先按 .ai_memory/index.json 的 startup_order 完成快速启动，再读取和任务直接相关的文件。
+修改代码、补测试、运行验证、按需更新记忆一次做完。
 除非遇到无法自行解决的硬性阻塞，例如缺少密钥、外部平台权限、必须人工扫码/发布、生产不可逆操作，否则不要停下来问我。
 完成后给我最终总结：改了什么、验证结果、哪些产品判断由你代做、还剩什么需要我手工确认。
 默认以“减少打扰优先”模式工作，遇到非关键分支直接替我做产品判断。
@@ -135,7 +137,8 @@ powershell -ExecutionPolicy Bypass -File D:\AIbiancheng\memory_system_templates\
 本仓库提供一个无需外部依赖的验证脚本，用来检查：
 - Agent 可读文件是否为严格 UTF-8 无 BOM。
 - Pro 的 `index.json` 是否能解析。
-- `bootstrap_order` 是否引用了真实存在的文件。
+- `startup_order` / `bootstrap_order` 是否引用了真实存在的文件。
+- 启动规则是否避免全量读取记忆文件，并引导 Agent 快速进入开发。
 - `init-memory.ps1` 和 `sync-tool-adapters.ps1` 生成的文件是否符合编码要求。
 
 运行：
