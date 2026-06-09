@@ -59,6 +59,100 @@ function Assert-IndexIsComplete {
     $requiredText = ($index.required_before_work -join "`n")
     Assert-True ($requiredText -notmatch "Read all Markdown files under \.ai_memory in full") "Startup rules must not require reading every Markdown file in full."
     Assert-True ($requiredText -match "Load non-startup memory files only when relevant") "Startup rules must explicitly defer non-startup files until relevant."
+    Assert-True ($requiredText -match "raw wording|real intent") "Startup rules must require intent translation before implementation."
+    Assert-True ($requiredText -match "context compression|session resume|model switch") "Startup rules must define resume behavior after context resets."
+
+    $intentRules = ($index.intent_translation_contract -join "`n")
+    Assert-True ($intentRules -match "confirmed facts|open questions") "index.json must define an intent translation contract."
+
+    $writeTriggers = ($index.memory_write_triggers -join "`n")
+    Assert-True ($writeTriggers -match "activeContext\.md") "index.json must define activeContext.md write triggers."
+    Assert-True ($writeTriggers -match "verified checkpoints|checkpoint") "index.json must require checkpoint-based verified writes."
+    Assert-True ($writeTriggers -match "single-writer|single writer|single-writer files") "index.json must define single-writer primary memory files."
+
+    $resumeRules = ($index.resume_protocol -join "`n")
+    Assert-True ($resumeRules -match "activeContext\.md") "index.json must define resume instructions around activeContext.md."
+    Assert-True ($requiredText -match "masterTaskLedger\.md") "Startup rules must mention the master task ledger for multi-agent work."
+    Assert-True ($requiredText -match "task-packs") "Startup rules must mention task packs for complex tasks."
+    Assert-True ($requiredText -match "Requirement Checklist") "Startup rules must require requirements coverage before completion."
+}
+
+function Assert-GrowthControlFiles {
+    param([string]$MemoryPath)
+
+    $ledgerPath = Join-Path $MemoryPath "masterTaskLedger.md"
+    $taskPackReadmePath = Join-Path $MemoryPath "task-packs\README.md"
+    $historyReadmePath = Join-Path $MemoryPath "history\README.md"
+
+    Assert-True (Test-Path $ledgerPath) "Missing masterTaskLedger.md in $MemoryPath"
+    Assert-True (Test-Path $taskPackReadmePath) "Missing task-packs/README.md in $MemoryPath"
+    Assert-True (Test-Path $historyReadmePath) "Missing history/README.md in $MemoryPath"
+
+    $ledger = Get-Content -Raw -Encoding UTF8 $ledgerPath
+    Assert-True ($ledger -match "IN_PROGRESS") "masterTaskLedger.md must define IN_PROGRESS ownership."
+    Assert-True ($ledger -match "DONE") "masterTaskLedger.md must define DONE completion records."
+    Assert-True ($ledger -match "verification evidence") "masterTaskLedger.md must require verification evidence."
+    Assert-True ($ledger -match "locked files") "masterTaskLedger.md must track locked files."
+
+    $taskPackReadme = Get-Content -Raw -Encoding UTF8 $taskPackReadmePath
+    Assert-True ($taskPackReadme -match "required reading") "task-packs/README.md must define required reading."
+    Assert-True ($taskPackReadme -match "do not read") "task-packs/README.md must define do-not-read boundaries."
+    Assert-True ($taskPackReadme -match "acceptance") "task-packs/README.md must define acceptance criteria."
+    Assert-True ($taskPackReadme -match "handoff") "task-packs/README.md must define handoff content."
+
+    $historyReadme = Get-Content -Raw -Encoding UTF8 $historyReadmePath
+    Assert-True ($historyReadme -match "archive") "history/README.md must define archive rules."
+    Assert-True ($historyReadme -match "activeContext\.md") "history/README.md must protect activeContext.md from long-term bloat."
+    Assert-True ($historyReadme -match "progress\.md") "history/README.md must protect progress.md from long-term bloat."
+}
+
+function Assert-ProjectFastStartupRules {
+    param([string]$Root)
+
+    $memoryPath = Join-Path $Root ".ai_memory"
+    Assert-IndexIsComplete $memoryPath
+
+    $activeContextPath = Join-Path $memoryPath "activeContext.md"
+    $agentRulesPath = Join-Path $memoryPath "agentRules.md"
+    Assert-True (Test-Path $activeContextPath) "Missing activeContext.md in project memory."
+    Assert-True (Test-Path $agentRulesPath) "Missing agentRules.md in project memory."
+
+    $activeContext = Get-Content -Raw -Encoding UTF8 $activeContextPath
+    Assert-True ($activeContext -match 'index\.json') "activeContext.md must mention index.json in the entry rules."
+    Assert-True ($activeContext -match 'startup_order') "activeContext.md must use startup_order for Fast startup."
+    Assert-True ($activeContext -notmatch '\[WIP\].{0,20}example|\[WIP\].{0,20}sample') "activeContext.md must not contain template WIP examples."
+    Assert-True ($activeContext -notmatch 'Read all Markdown files|all Markdown files|every Markdown file') "activeContext.md must not require full memory reads on every startup."
+    Assert-True ($activeContext -match 'Raw Wording|raw wording') "activeContext.md must include a raw user wording field."
+    Assert-True ($activeContext -match 'Real Intent|real intent') "activeContext.md must include a real intent field."
+    Assert-True ($activeContext -match 'Resume Reads|resume reads') "activeContext.md must include resume reads."
+    Assert-True ($activeContext -match 'main agent') "activeContext.md must define main-agent ownership."
+
+    $agentRules = Get-Content -Raw -Encoding UTF8 $agentRulesPath
+    Assert-True ($agentRules -notmatch 'all Markdown files|every Markdown file') "agentRules.md must not require full memory reads on every startup."
+    Assert-True ($agentRules -match "Fast startup") "agentRules.md must describe the fast startup protocol."
+    Assert-True ($agentRules -match "L1[\s\S]*direct execution") "L1 tasks should default to direct execution without waiting for confirmation."
+    Assert-True ($agentRules -match "demand-driven") "Memory writes should be demand-driven, not mandatory for every file."
+    Assert-True ($agentRules -match 'real intent|raw wording') "agentRules.md must require intent translation."
+    Assert-True ($agentRules -match 'context compression|resume|model switch') "agentRules.md must define resume behavior after context resets."
+    Assert-True ($agentRules -match 'main agent') "agentRules.md must define a main-agent writer for primary memory files."
+    Assert-True ($agentRules -match 'shell redirection|Out-File|Set-Content|Add-Content') "agentRules.md must ban default shell text writes for memory files."
+    Assert-True ($agentRules -match 'masterTaskLedger\.md') "agentRules.md must mention the master task ledger."
+    Assert-True ($agentRules -match 'task-packs') "agentRules.md must mention task packs."
+    Assert-True ($agentRules -match 'Requirement Checklist') "agentRules.md must require requirements coverage before completion."
+
+    Assert-GrowthControlFiles $memoryPath
+
+    foreach ($adapterName in @("AGENTS.md", "CLAUDE.md")) {
+        $adapterPath = Join-Path $Root $adapterName
+        if (Test-Path $adapterPath) {
+            $adapterText = Get-Content -Raw -Encoding UTF8 $adapterPath
+            Assert-True ($adapterText -notmatch 'Read every Markdown file under `.ai_memory/` in full|all Markdown files|every Markdown file') "$adapterName must not require full Markdown reads."
+            Assert-True ($adapterText -match 'startup_order|Fast startup|fast startup') "$adapterName must point agents to the fast startup flow."
+            Assert-True ($adapterText -match 'real intent|raw wording') "$adapterName must require intent translation."
+            Assert-True ($adapterText -match 'context compression|checkpoint|resume|model switch') "$adapterName must define checkpointed resume behavior."
+            Assert-True ($adapterText -match 'Startup Summary') "$adapterName must require a startup summary after Fast startup."
+        }
+    }
 }
 
 function Assert-FastStartupRules {
@@ -67,30 +161,59 @@ function Assert-FastStartupRules {
     $activeContext = Get-Content -Raw -Encoding UTF8 (Join-Path $Root ".ai_memory-pro\activeContext.md")
     Assert-True ($activeContext -notmatch "\[WIP\]") "activeContext.md must not contain template WIP markers."
     Assert-True ($activeContext -match "\[IDLE\]") "activeContext.md should start from an explicit IDLE state."
+    Assert-True ($activeContext -match 'Raw Wording|raw wording') "activeContext.md must include a raw user wording field."
+    Assert-True ($activeContext -match 'Real Intent|real intent') "activeContext.md must include a real intent field."
+    Assert-True ($activeContext -match 'Resume Reads|resume reads') "activeContext.md must include resume reads."
+    Assert-True ($activeContext -match 'main agent') "activeContext.md must define main-agent ownership."
 
     $agentRules = Get-Content -Raw -Encoding UTF8 (Join-Path $Root ".ai_memory-pro\agentRules.md")
     Assert-True ($agentRules -notmatch "all Markdown files|every Markdown file") "agentRules.md must not require full memory reads on every startup."
     Assert-True ($agentRules -match "Fast startup") "agentRules.md must describe the fast startup protocol."
     Assert-True ($agentRules -match "L1[\s\S]*direct execution") "L1 tasks should default to direct execution without waiting for confirmation."
     Assert-True ($agentRules -match "demand-driven") "Memory writes should be demand-driven, not mandatory for every file."
+    Assert-True ($agentRules -match 'real intent|raw wording') "agentRules.md must require intent translation."
+    Assert-True ($agentRules -match 'context compression|resume|model switch') "agentRules.md must define resume behavior after context resets."
+    Assert-True ($agentRules -match 'main agent') "agentRules.md must define a main-agent writer for primary memory files."
+    Assert-True ($agentRules -match 'shell redirection|Out-File|Set-Content|Add-Content') "agentRules.md must ban default shell text writes for memory files."
+    Assert-True ($agentRules -match 'masterTaskLedger\.md') "agentRules.md must mention the master task ledger."
+    Assert-True ($agentRules -match 'task-packs') "agentRules.md must mention task packs."
+    Assert-True ($agentRules -match 'Requirement Checklist') "agentRules.md must require requirements coverage before completion."
+
+    $progressRules = Get-Content -Raw -Encoding UTF8 (Join-Path $Root ".ai_memory-pro\progress.md")
+    Assert-True ($progressRules -match 'main agent') "progress.md must define main-agent ownership."
+    Assert-True ($progressRules -match 'checkpoint') "progress.md must require checkpoint-based writes."
+
+    Assert-GrowthControlFiles (Join-Path $Root ".ai_memory-pro")
 
     $adapterFiles = Get-ChildItem -Path (Join-Path $Root "tool_adapters") -File
     foreach ($adapter in $adapterFiles) {
         $adapterText = Get-Content -Raw -Encoding UTF8 $adapter.FullName
         Assert-True ($adapterText -notmatch "Read every Markdown file under `.ai_memory/` in full|all Markdown files|every Markdown file") "$($adapter.Name) must not require full Markdown reads."
         Assert-True ($adapterText -match "startup_order|Fast startup|fast startup") "$($adapter.Name) must point agents to the fast startup flow."
+        Assert-True ($adapterText -match 'real intent|raw wording') "$($adapter.Name) must require intent translation."
+        Assert-True ($adapterText -match 'context compression|checkpoint|resume|model switch') "$($adapter.Name) must define checkpointed resume behavior."
+        Assert-True ($adapterText -match 'Startup Summary') "$($adapter.Name) must require a startup summary after Fast startup."
     }
 }
 
 Write-Output "Checking repository text encodings..."
 $agentReadableFiles = Get-ChildItem -Path $Root -Recurse -File |
     Where-Object {
-        $_.FullName -notmatch "\\(\.git|\.archive|tmp-common-adapter-test|tmp-sync-adapter-test)\\" -and
+        $_.FullName -notmatch "\\(\.git|\.archive|node_modules|dist|\.vite|coverage|playwright-report|test-results|logs|\.cache|tmp|tmp-common-adapter-test|tmp-sync-adapter-test)\\" -and
         $_.Extension -in @(".md", ".json", ".template", ".txt")
     }
 
 foreach ($file in $agentReadableFiles) {
     Assert-Utf8NoBom $file
+}
+
+$projectMemoryPath = Join-Path $Root ".ai_memory"
+$templateMemoryPath = Join-Path $Root ".ai_memory-pro"
+if ((Test-Path (Join-Path $projectMemoryPath "index.json")) -and (-not (Test-Path (Join-Path $templateMemoryPath "index.json")))) {
+    Write-Output "Checking project Fast startup memory..."
+    Assert-ProjectFastStartupRules $Root
+    Write-Output "Memory system verification passed."
+    return
 }
 
 Write-Output "Checking memory indexes..."
@@ -113,6 +236,11 @@ try {
     }
 
     Get-Content -Raw -Encoding UTF8 (Join-Path $tempRoot ".ai_memory\index.json") | ConvertFrom-Json | Out-Null
+    Assert-ProjectFastStartupRules $tempRoot
+
+    $setupTodo = Get-Content -Raw -Encoding UTF8 (Join-Path $tempRoot ".ai_memory\SETUP_TODO.md")
+    Assert-True ($setupTodo -match "tool_adapters/") "SETUP_TODO.md must render tool_adapters/ literally."
+    Assert-True ($setupTodo -notmatch ([char]9 + "ool_adapters/")) "SETUP_TODO.md must not contain a tab caused by PowerShell backtick escaping."
 
     Write-Output "Checking Lite mode is unavailable..."
     $liteRoot = Join-Path $tempRoot "lite"

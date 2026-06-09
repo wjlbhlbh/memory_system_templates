@@ -329,21 +329,25 @@ $todo = @"
 工具适配器：$Adapter
 
 ## 只需要优先补这些
-1. 在 projectbrief.md 中补齐业务目标、目标用户、成功标准、项目边界
+1. 在 projectbrief.md 中补齐业务目标、目标用户、成功标准、项目边界、明确非目标和不可破坏规则
 2. 在 techContext.md 中确认自动探测出的技术栈是否准确
    - 不需要反复维护“Windows / PowerShell / 个人机器版本”这类稳定宿主机信息
    - 只有项目明确依赖某个运行时或工具链版本时，才补对应版本要求
    - 若脚本已识别出版本要求，优先核对其来源是否符合项目真实约束
 3. 补 interfaces.md 中最关键的 1-3 个接口
 4. 补 architecture.md 中总体架构与核心模块
-5. 默认推荐保留根目录 `AGENTS.md` 和 `CLAUDE.md`，避免后续切换工具时忘记补入口文件
-6. 如果你没有使用 `-Adapter` 自动生成入口文件，再从 `tool_adapters/` 里选择对应模板手工复制到项目根目录
+5. 第一次进入长任务前，按 activeContext.md 模板填写“用户原话 / 真实意图 / 成功标准 / 明确非目标 / 恢复必读文件”
+6. 如果项目需要多 LLM 交替开发，先在 masterTaskLedger.md 拆出一次会话可闭环的任务
+7. 如果单个任务上下文过大，在 task-packs/ 下创建任务包，明确 required reading / do not read / acceptance / handoff
+8. 默认推荐保留根目录 AGENTS.md 和 CLAUDE.md，避免后续切换工具时忘记补入口文件
+9. 如果你没有使用 -Adapter 自动生成入口文件，再从 tool_adapters/ 里选择对应模板手工复制到项目根目录
 
 ## 可以后补的
 - decisionLog.md
 - backlog.md
 - pitfalls.md
 - progress.md
+- history/ 下的归档文件；只有旧日志或过期交接变长后再归档
 
 ## 初始化结果
 - `.ai_memory` 已生成

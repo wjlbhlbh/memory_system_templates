@@ -1,5 +1,5 @@
 {
-  "version": "1.0.0",
+  "version": "1.1.0",
   "memory_system": "professional-project-memory",
   "startup_order": [
     "index.json",
@@ -17,36 +17,71 @@
     "techContext.md",
     "decisionLog.md",
     "backlog.md",
+    "masterTaskLedger.md",
+    "task-packs/README.md",
     "pitfalls.md",
     "interfaces.md",
     "progress.md",
-    "architecture.md"
+    "architecture.md",
+    "history/README.md"
   ],
   "required_before_work": [
     "Fast startup: read index.json, then only startup_order files.",
     "Load non-startup memory files only when relevant to task, module, interface, architecture, decision, backlog, pitfall, or verification.",
     "If activeContext.md is [IDLE] or empty, proceed; if it has real [WIP], [AWAITING_QA], or [REWORK], continue that state.",
     "Classify the task as L0/L1/L2/L3 before execution.",
+    "Translate the user's raw wording into real intent, success criteria, non-goals, and risk level before implementation.",
+    "If the request is vague or non-technical, prefer the smallest behavior-preserving interpretation; ask only when ambiguity changes data, public behavior, compatibility, permissions, or architecture.",
     "Use reduce-interruption mode: make conservative assumptions and continue unless blocked.",
     "For L0/L1 work, proceed directly unless a key requirement is missing or risk is high.",
     "For L2/L3 or high-risk work, stop at the plan stage and ask for confirmation.",
+    "Before editing, identify the files, modules, interfaces, and flows that must not be broken by this task.",
     "Read the latest physical snapshot of target files before editing.",
+    "For long-running, multi-agent, or cross-module work, read masterTaskLedger.md and claim or create a task before implementation.",
+    "For complex tasks that cannot be held in one small context, create or read the matching task-packs/*.md file; obey its required reading and do not read boundaries.",
+    "Before marking work complete, produce a Requirement Checklist that maps every requested behavior and boundary to implementation status and verification evidence.",
     "Do not mark work as complete without execution evidence.",
+    "Update activeContext.md at state changes, plan lock, verified checkpoints, handoff points, and before context-heavy interruptions.",
+    "Only one main agent may write activeContext.md and progress.md; child agents must return results to the main agent instead of editing primary memory files directly.",
+    "Do not update memory files through shell redirection or PowerShell default text output; use explicit UTF-8 writes or patch-based edits.",
+    "On context compression, model switch, or session resume, rerun Fast startup and continue from the latest checkpoint in activeContext.md instead of replaying the whole chat from memory.",
     "After verified completion, commit and push with a clear Chinese commit message when Git remote and permissions are available.",
     "Keep local backups under .archive/ and runtime artifacts ignored by Git."
   ],
+  "intent_translation_contract": [
+    "Separate confirmed facts, working assumptions, and open questions before implementation.",
+    "For non-programmer requests, translate symptom language into an executable engineering target instead of coding from wording alone.",
+    "Record the chosen interpretation in activeContext.md when work spans multiple steps, tools, or agents."
+  ],
+  "memory_write_triggers": [
+    "Update activeContext.md when moving from [IDLE] to real work, after plan lock, after each verified slice, before spawning or merging parallel agents, and whenever status changes to [WIP], [AWAITING_QA], or [REWORK].",
+    "Write progress.md only for verified checkpoints; long tasks must be split into small verified slices instead of waiting for one final big write.",
+    "Update masterTaskLedger.md when claiming, blocking, completing, or archiving a multi-agent or long-running task.",
+    "Create or update task-packs/*.md when a task needs self-contained required reading, do not read boundaries, acceptance criteria, or handoff notes.",
+    "Primary memory files activeContext.md and progress.md are single-writer files owned by the main agent during a task.",
+    "Write decisionLog.md, backlog.md, pitfalls.md, interfaces.md, or architecture.md only when the information will matter after a later resume."
+  ],
+  "resume_protocol": [
+    "On context compression, model switch, or tool switch, rerun Fast startup before taking any new action.",
+    "Reopen the latest checkpoint in activeContext.md, then read only the files explicitly listed there under resume reads.",
+    "If activeContext.md points to a task pack or a ledger task, read that task pack or the relevant masterTaskLedger.md entry before touching code.",
+    "Resume from the last verified checkpoint instead of replaying the full conversation from memory."
+  ],
   "file_roles": {
     "projectbrief.md": "Goals, scope, constraints.",
-    "activeContext.md": "Current state and handoff.",
+    "activeContext.md": "Current state, intent translation, and handoff checkpoint.",
     "agentRules.md": "Short startup rules.",
     "engineeringRules.md": "Detailed governance; load on demand.",
     "systemPatterns.md": "Engineering patterns.",
     "techContext.md": "Stack and commands.",
     "decisionLog.md": "Long-term decisions.",
     "backlog.md": "Open debts.",
+    "masterTaskLedger.md": "Global task ledger for multi-agent and long-running work.",
+    "task-packs/README.md": "Template and rules for self-contained task context packs.",
     "pitfalls.md": "Known traps.",
     "interfaces.md": "Contracts.",
-    "progress.md": "Verified progress.",
-    "architecture.md": "Architecture map."
+    "progress.md": "Verified progress and checkpoints.",
+    "architecture.md": "Architecture map.",
+    "history/README.md": "Archive rules for long-term memory growth control."
   }
 }

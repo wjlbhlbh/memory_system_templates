@@ -9,9 +9,15 @@ AI 编程最常见的失控点不是“不会写代码”，而是上下文断�
 本项目把这些协作纪律沉淀为一套轻量模板：
 - 新会话先读 `.ai_memory/index.json`，再只读 `startup_order` 指定的启动文件。
 - 其他记忆文件按任务需要再读取，避免每次启动都消耗大量上下文。
+- 在真正编码前，先把用户原话翻译成“真实意图 / 成功标准 / 明确非目标 / 风险级别”。
 - 任务按 L0/L1/L2/L3 分级，明确哪些能自动推进、哪些必须确认。
 - 每次完成都要有真实验证证据，并同步 `progress.md`。
+- 长任务按 verified checkpoint 持续写回，`activeContext.md` 负责当前状态，`progress.md` 负责已验证事实。
+- 多 LLM / 多 Agent / 跨模块任务进入 `masterTaskLedger.md`，按任务认领、锁定文件、记录验证证据和交接要点。
+- 复杂任务用 `task-packs/` 做单任务上下文包，明确 required reading、do not read、acceptance、Requirement Checklist 和 handoff。
+- 长期历史、旧日志和过期交接进入 `history/`，避免启动文件和进度文件越来越臃肿。
 - 默认支持“减少打扰的一口气交付”：小决策由 Agent 保守判断，除硬性阻塞外持续推进。
+- 上下文压缩、模型切换、工具切换后，先根据 `activeContext.md` 恢复最近 checkpoint，而不是重新猜前文。
 - 默认执行源码提交与本地备份分层：源码进 Git，备份进 `.archive/`，运行产物进 `.gitignore`。
 - Agent 可读文件统一使用 UTF-8 无 BOM，降低跨工具读取或写入异常概率。
 
@@ -52,6 +58,41 @@ AI 编程最常见的失控点不是“不会写代码”，而是上下文断�
 不是把整个 `tool_adapters/` 文件夹复制进新项目。
 默认推荐做法是：在项目根目录同时准备好 `AGENTS.md` 和 `CLAUDE.md`，把常见工具入口一次配齐。
 这样后面切到 Codex、OpenCode、Antigravity、Claude Code 时，不需要再想起手工补入口文件。
+
+## 针对实战问题的强化
+
+最近模板补强了 4 个容易失控的点：
+
+1. **模糊需求先翻译，不允许直接按字面编码**
+   - 先写清用户原话、真实意图、成功标准、明确非目标。
+   - 用户不是程序员很正常，Agent 不能因为表述不专业就擅自扩需求。
+   - 只有歧义不影响行为边界时，才允许保守假设继续。
+
+2. **先锁定“禁止误伤项”，再动代码**
+   - 修改前先识别不应被破坏的模块、页面、接口、数据流、测试口径。
+   - 验证前不得宣称“只影响这里”。
+
+3. **连续开发按 checkpoint 写回，不等最后一次性补记忆**
+   - `activeContext.md` 保存当前 WIP、阶段、恢复锚点、多 Agent 分工。
+   - `progress.md` 只写已验证通过的 checkpoint。
+   - 长任务必须拆成多个小闭环，否则上下文压缩后一定会反复重走前戏。
+
+4. **上下文压缩 / 切模型后，先恢复再继续**
+   - 重新读取 `index.json + startup_order`。
+   - 再读取 `activeContext.md` 中列出的恢复必读文件。
+   - 从最近 verified checkpoint 接着做，而不是重新靠聊天记忆拼接。
+
+5. **多 LLM 交替开发用全局任务账本**
+   - `masterTaskLedger.md` 只记录任务索引、状态、依赖、locked files、verification evidence 和交接要点。
+   - 每个任务必须拆到一次会话能独立交付和验证的粒度。
+   - 子 Agent 不直接写主记忆，由主 Agent 汇总后写回。
+
+6. **复杂任务用任务上下文包，不靠全量读记忆**
+   - `task-packs/*.md` 明确本任务 required reading 和 do not read。
+   - 完成前必须输出 Requirement Checklist，逐条对应需求、实现状态和验证证据。
+   - 旧日志、长交接和过期细节移入 `history/`，防止 `activeContext.md` / `progress.md` 变成大杂烩。
+
+更完整的连续开发协议见 [docs/CONTINUOUS_DEVELOPMENT_PROTOCOL.md](docs/CONTINUOUS_DEVELOPMENT_PROTOCOL.md)。
 
 ### 常见工具与生效位置
 
@@ -139,6 +180,8 @@ powershell -ExecutionPolicy Bypass -File D:\AIbiancheng\memory_system_templates\
 - Pro 的 `index.json` 是否能解析。
 - `startup_order` / `bootstrap_order` 是否引用了真实存在的文件。
 - 启动规则是否避免全量读取记忆文件，并引导 Agent 快速进入开发。
+- 多 LLM 协作所需的 `masterTaskLedger.md`、`task-packs/README.md`、`history/README.md` 是否存在且包含关键规则。
+- 工具入口模板是否要求 Startup Summary 和 Requirement Checklist。
 - `init-memory.ps1` 和 `sync-tool-adapters.ps1` 生成的文件是否符合编码要求。
 
 运行：

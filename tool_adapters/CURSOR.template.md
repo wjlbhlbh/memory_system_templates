@@ -4,9 +4,15 @@
 
 1. 先读取 `.ai_memory/index.json`
 2. 只读取 `startup_order` 中列出的启动文件
-3. 其他记忆文件只在与当前任务、目标模块、接口、架构、历史决策、待办、踩坑或验证路径相关时按需读取
-4. 发现真实未闭合 `[WIP]` / `[AWAITING_QA]` / `[REWORK]` 时，先接管再工作；若为 `[IDLE]` 或空模板，直接进入当前任务
-5. 改代码前重读目标文件最新快照
-6. 无真实执行证据不得结案
+3. 发现真实未闭合 `[WIP]` / `[AWAITING_QA]` / `[REWORK]` 时，先接管再工作；若为 `[IDLE]` 或空模板，直接进入当前任务
+4. 实施前必须先把用户原话 (raw wording) 翻译成：真实意图 (real intent)、成功标准、明确非目标、任务分级；若需求模糊，默认选最小且可回退的解释
+5. 只要歧义会影响数据、公共行为、兼容性、权限边界或架构，必须先停在方案阶段确认
+6. 其他记忆文件只在与当前任务、目标模块、接口、架构、历史决策、待办、踩坑或验证路径相关时按需读取
+7. 完成启动后必须输出一行 Startup Summary：已读文件、当前状态、是否需要读取 `masterTaskLedger.md` 或 `task-packs/*.md`
+8. 长任务、多 Agent、跨模块任务必须读取或创建 `masterTaskLedger.md` 任务；复杂任务必须读取或创建对应 `task-packs/*.md`，并遵守 required reading / do not read
+9. 改代码前重读目标文件最新快照，并先识别本轮“禁止误伤项”
+10. 连续开发、多 Agent 并行、准备中断或担心 context compression / 模型切换前，必须更新 `activeContext.md` 的恢复锚点
+11. 无真实执行证据和 Requirement Checklist 不得结案
+12. 如果发生 context compression、模型切换或工具切换，先重跑 Fast startup，再从 `activeContext.md` 的最近 checkpoint 继续，而不是靠聊天记忆重建上下文
 
 如有冲突，以 `.ai_memory/projectbrief.md` 为准。
