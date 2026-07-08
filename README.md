@@ -36,15 +36,16 @@ Clone this repository, then run the initializer from the root of the project whe
 
 ```powershell
 git clone https://github.com/wjlbhlbh/memory_system_templates.git
-cd path\to\your-project
-$repo = "C:\path\to\memory_system_templates"
-powershell -ExecutionPolicy Bypass -File "$repo\init-memory.ps1" -Mode Pro
+cd memory_system_templates
+$targetProject = Resolve-Path "..\your-project"
+powershell -ExecutionPolicy Bypass -File .\init-memory.ps1 -TargetPath $targetProject -Mode Pro
 ```
 
-If you are already inside this repository and want to test the initializer on another project:
+Or, if you are already inside the project you want to initialize, point to your own cloned template repository:
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File .\init-memory.ps1 -TargetPath C:\path\to\your-project -Mode Pro
+$templateRepo = Resolve-Path "..\memory_system_templates"
+powershell -ExecutionPolicy Bypass -File "$templateRepo\init-memory.ps1" -TargetPath . -Mode Pro
 ```
 
 The initializer creates:
@@ -227,40 +228,50 @@ AI 编程最常见的失控点不是“不会写代码”，而是上下文断�
 - 用 Claude Code 专用方式：传 `-Adapter CLAUDE`
 
 ## 使用方式
-1. 进入新项目根目录
-2. 运行：
+### 方式一：在模板仓库目录运行
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File D:\AIbiancheng\memory_system_templates\init-memory.ps1 -Mode Pro
+git clone https://github.com/wjlbhlbh/memory_system_templates.git
+cd memory_system_templates
+$targetProject = Resolve-Path "..\your-project"
+powershell -ExecutionPolicy Bypass -File .\init-memory.ps1 -TargetPath $targetProject -Mode Pro
 ```
 
-默认情况下，脚本会自动生成 `AGENTS.md` 和 `CLAUDE.md` 两个常用入口文件：
+### 方式二：在目标项目根目录运行
+
+先进入你要初始化的项目根目录，再把 `$templateRepo` 指向你实际克隆本仓库的位置：
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File D:\AIbiancheng\memory_system_templates\init-memory.ps1 -Mode Pro
+cd your-project
+$templateRepo = Resolve-Path "..\memory_system_templates"
+powershell -ExecutionPolicy Bypass -File "$templateRepo\init-memory.ps1" -TargetPath . -Mode Pro
 ```
+
+默认情况下，脚本会自动生成 `AGENTS.md` 和 `CLAUDE.md` 两个常用入口文件。
 
 如果你想只生成某一个工具入口文件，也可以显式指定 `-Adapter`：
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File D:\AIbiancheng\memory_system_templates\init-memory.ps1 -Mode Pro -Adapter CODEX
+powershell -ExecutionPolicy Bypass -File "$templateRepo\init-memory.ps1" -TargetPath . -Mode Pro -Adapter CODEX
 ```
 
 或：
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File D:\AIbiancheng\memory_system_templates\init-memory.ps1 -Mode Pro -Adapter CLAUDE
+powershell -ExecutionPolicy Bypass -File "$templateRepo\init-memory.ps1" -TargetPath . -Mode Pro -Adapter CLAUDE
 ```
 
-3. 打开新生成的 `.ai_memory/SETUP_TODO.md`
-4. 只补最少几个业务字段
-5. 默认情况下，项目根目录已经自动生成 `AGENTS.md` 和 `CLAUDE.md`
-6. 如果是老项目或你想补入口文件，可运行 `sync-tool-adapters.ps1`
+初始化后：
+
+1. 打开新生成的 `.ai_memory/SETUP_TODO.md`
+2. 只补最少几个业务字段
+3. 默认情况下，项目根目录已经自动生成 `AGENTS.md` 和 `CLAUDE.md`
+4. 如果是老项目或你想补入口文件，可运行 `sync-tool-adapters.ps1`
 
 例如：
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File D:\AIbiancheng\memory_system_templates\sync-tool-adapters.ps1 -TargetPath .
+powershell -ExecutionPolicy Bypass -File "$templateRepo\sync-tool-adapters.ps1" -TargetPath .
 ```
 
 ## 如果不想用脚本

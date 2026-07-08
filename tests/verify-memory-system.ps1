@@ -80,6 +80,22 @@ function Assert-ToolAgnosticText {
     Assert-True ($Text -match "available (file )?(read|edit|write|search) capability|current environment|equivalent capability") "$Name must tell agents to use whatever equivalent capability exists in the current environment."
 }
 
+function Assert-NoHardcodedLocalDocPath {
+    param([System.IO.FileInfo]$File)
+
+    $relative = Get-RelativePath $File.FullName
+    $text = Get-Content -Raw -Encoding UTF8 $File.FullName
+    $forbiddenPatterns = @(
+        "D:\\AIbiancheng\\memory_system_templates",
+        "C:\\Users\\[^\\]+",
+        "[A-Za-z]:\\[^`r`n]*\\memory_system_templates\\(init-memory|sync-tool-adapters|search-memory)\.ps1"
+    )
+
+    foreach ($pattern in $forbiddenPatterns) {
+        Assert-True ($text -notmatch $pattern) "Public docs must not hardcode local machine paths. Use cloned repository variables or relative commands instead: $relative"
+    }
+}
+
 function Assert-PrimaryMemoryWindowRules {
     param(
         [string]$ActiveContext,
@@ -418,6 +434,17 @@ $agentReadableFiles = Get-ChildItem -Path $Root -Recurse -File |
 
 foreach ($file in $agentReadableFiles) {
     Assert-Utf8NoBom $file
+}
+
+Write-Output "Checking public docs for hardcoded local paths..."
+$publicDocFiles = Get-ChildItem -Path $Root -Recurse -File |
+    Where-Object {
+        $_.FullName -notmatch "\\(\.git|\.archive|node_modules|dist|\.vite|coverage|playwright-report|test-results|logs|\.cache|tmp|tmp-common-adapter-test|tmp-sync-adapter-test)\\" -and
+        $_.Extension -in @(".md", ".template", ".yml", ".yaml")
+    }
+
+foreach ($file in $publicDocFiles) {
+    Assert-NoHardcodedLocalDocPath $file
 }
 
 $projectMemoryPath = Join-Path $Root ".ai_memory"
