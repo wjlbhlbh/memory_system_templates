@@ -121,8 +121,8 @@
 
 - `activeContext.md` 和 `progress.md` 是单写者文件，只允许主 Agent 写
 - 子 Agent 只回传结果，不直接改主记忆
-- 禁止用 shell 重定向、`Out-File`、`Set-Content`、`Add-Content` 之类依赖默认编码的方式改记忆文件
-- 只允许显式 UTF-8 写入或 patch-based 编辑
+- 不限制具体工具、命令或编辑器；限制的是“依赖默认编码或隐式文本输出”的写法
+- 记忆文件必须显式保持 UTF-8 无 BOM，写入后确认内容可读
 - 长任务必须按 checkpoint 持续写回，不要最后一次性重写整份记忆
 - 过期日志、长交接和旧任务细节移入 `history/`，避免启动文件持续膨胀
 

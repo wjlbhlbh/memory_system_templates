@@ -1,5 +1,5 @@
 {
-  "version": "1.1.0",
+  "version": "1.1.1",
   "memory_system": "professional-project-memory",
   "startup_order": [
     "index.json",
@@ -37,13 +37,15 @@
     "For L2/L3 or high-risk work, stop at the plan stage and ask for confirmation.",
     "Before editing, identify the files, modules, interfaces, and flows that must not be broken by this task.",
     "Read the latest physical snapshot of target files before editing.",
+    "Use the current environment's available file read, search, edit, and write capability; do not require or complain about a specific tool API name.",
     "For long-running, multi-agent, or cross-module work, read masterTaskLedger.md and claim or create a task before implementation.",
     "For complex tasks that cannot be held in one small context, create or read the matching task-packs/*.md file; obey its required reading and do not read boundaries.",
     "Before marking work complete, produce a Requirement Checklist that maps every requested behavior and boundary to implementation status and verification evidence.",
     "Do not mark work as complete without execution evidence.",
     "Update activeContext.md at state changes, plan lock, verified checkpoints, handoff points, and before context-heavy interruptions.",
     "Only one main agent may write activeContext.md and progress.md; child agents must return results to the main agent instead of editing primary memory files directly.",
-    "Do not update memory files through shell redirection or PowerShell default text output; use explicit UTF-8 writes or patch-based edits.",
+    "Read and update memory files with explicit UTF-8. Any tool or command is acceptable only if it avoids implicit default encoding and preserves readable UTF-8 text.",
+    "If memory content shows mojibake/乱码, stop business edits, re-read or repair the file as explicit UTF-8, then continue only after the readable text is restored.",
     "On context compression, model switch, or session resume, rerun Fast startup and continue from the latest checkpoint in activeContext.md instead of replaying the whole chat from memory.",
     "After verified completion, commit and push with a clear Chinese commit message when Git remote and permissions are available.",
     "Keep local backups under .archive/ and runtime artifacts ignored by Git."
@@ -54,8 +56,8 @@
     "Record the chosen interpretation in activeContext.md when work spans multiple steps, tools, or agents."
   ],
   "memory_write_triggers": [
-    "Update activeContext.md when moving from [IDLE] to real work, after plan lock, after each verified slice, before spawning or merging parallel agents, and whenever status changes to [WIP], [AWAITING_QA], or [REWORK].",
-    "Write progress.md only for verified checkpoints; long tasks must be split into small verified slices instead of waiting for one final big write.",
+    "Update activeContext.md when moving from [IDLE] to real work, after plan lock, after each verified slice, before spawning or merging parallel agents, and whenever status changes to [WIP], [AWAITING_QA], or [REWORK]. Keep it as a bounded active window; move overflow detail to task-packs/ or history/.",
+    "Write progress.md only for verified checkpoints; long tasks must be split into small verified slices instead of waiting for one final big write. Keep progress.md as a rolling window with archive links.",
     "Update masterTaskLedger.md when claiming, blocking, completing, or archiving a multi-agent or long-running task.",
     "Create or update task-packs/*.md when a task needs self-contained required reading, do not read boundaries, acceptance criteria, or handoff notes.",
     "Primary memory files activeContext.md and progress.md are single-writer files owned by the main agent during a task.",
@@ -69,7 +71,7 @@
   ],
   "file_roles": {
     "projectbrief.md": "Goals, scope, constraints.",
-    "activeContext.md": "Current state, intent translation, and handoff checkpoint.",
+    "activeContext.md": "Current state, intent translation, handoff checkpoint, and bounded active window.",
     "agentRules.md": "Short startup rules.",
     "engineeringRules.md": "Detailed governance; load on demand.",
     "systemPatterns.md": "Engineering patterns.",
@@ -80,7 +82,7 @@
     "task-packs/README.md": "Template and rules for self-contained task context packs.",
     "pitfalls.md": "Known traps.",
     "interfaces.md": "Contracts.",
-    "progress.md": "Verified progress and checkpoints.",
+    "progress.md": "Verified progress, checkpoint rolling window, and archive index.",
     "architecture.md": "Architecture map.",
     "history/README.md": "Archive rules for long-term memory growth control."
   }

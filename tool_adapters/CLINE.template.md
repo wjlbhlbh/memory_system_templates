@@ -12,6 +12,8 @@ Mandatory Fast startup sequence:
 7. After startup, output one Startup Summary line: files read, current state, and whether `masterTaskLedger.md` or `task-packs/*.md` is needed.
 8. For long-running, multi-agent, or cross-module work, read or create the relevant `masterTaskLedger.md` task; for complex tasks, read or create the matching `task-packs/*.md` and obey required reading / do not read.
 9. Re-read physical target files before editing and identify what must not be broken by the task.
-10. For long-running work, multi-agent work, or before context compression / model switching, update `activeContext.md` with the latest checkpoint and resume reads.
-11. Require execution evidence and a Requirement Checklist before `[DONE]`.
-12. After context compression, model switching, or tool switching, rerun Fast startup and resume from `activeContext.md` instead of replaying the whole chat from memory.
+10. Use the current environment's available file read, search, edit, and write capability; do not require or complain about a specific tool API name.
+11. Read and update memory files as explicit UTF-8. If mojibake/乱码 appears, repair readability before business edits.
+12. For long-running work, multi-agent work, or before context compression / model switching, update `activeContext.md` with the latest checkpoint and resume reads. Keep `activeContext.md` as the active window and `progress.md` as a rolling window.
+13. Require execution evidence and a Requirement Checklist before `[DONE]`.
+14. After context compression, model switching, or tool switching, rerun Fast startup and resume from `activeContext.md` instead of replaying the whole chat from memory.

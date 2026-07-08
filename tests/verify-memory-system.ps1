@@ -29,13 +29,47 @@ function Assert-Utf8NoBom {
     $relative = Get-RelativePath $File.FullName
 
     try {
-        $null = $strictUtf8.GetString($bytes)
+        $text = $strictUtf8.GetString($bytes)
     } catch {
         throw "Invalid UTF-8: $relative"
     }
 
     $hasUtf8Bom = $bytes.Length -ge 3 -and $bytes[0] -eq 0xEF -and $bytes[1] -eq 0xBB -and $bytes[2] -eq 0xBF
     Assert-True (-not $hasUtf8Bom) "UTF-8 BOM is not allowed for agent-readable files: $relative"
+    Assert-NoMojibakeText -Text $text -RelativePath $relative
+}
+
+function Assert-NoMojibakeText {
+    param(
+        [string]$Text,
+        [string]$RelativePath
+    )
+
+    $mojibakePattern = "\uFFFD|\u00C3.|\u00C2.|\u00E2\u20AC|\u9225|\u951B|\u9286|\u4E53|\u8E47\uE102\u20AC|\u6D93\u20AC|\u9428"
+    Assert-True ($Text -notmatch $mojibakePattern) "Possible mojibake text in $RelativePath. Read/write agent-readable files as explicit UTF-8, then repair the readable source text before continuing."
+}
+
+function Assert-ToolAgnosticText {
+    param(
+        [string]$Text,
+        [string]$Name
+    )
+
+    Assert-True ($Text -notmatch "\b(view_file|read_file|edit_file|write_file|replace_in_file)\b") "$Name must not require or mention a specific file-tool API name."
+    Assert-True ($Text -match "available (file )?(read|edit|write|search) capability|current environment|equivalent capability") "$Name must tell agents to use whatever equivalent capability exists in the current environment."
+}
+
+function Assert-PrimaryMemoryWindowRules {
+    param(
+        [string]$ActiveContext,
+        [string]$Progress,
+        [string]$Name
+    )
+
+    Assert-True ($ActiveContext -match "context budget|active window|rolling window|上下文预算|活跃窗口|滚动窗口") "$Name activeContext.md must define a bounded active window."
+    Assert-True ($ActiveContext -match "history/|task-packs/") "$Name activeContext.md must point overflow detail to task packs or history."
+    Assert-True ($Progress -match "rolling window|active window|近期窗口|滚动窗口") "$Name progress.md must define a bounded rolling window."
+    Assert-True ($Progress -match "archive index|归档索引|history/") "$Name progress.md must keep archive links instead of unlimited detail."
 }
 
 function Assert-IndexIsComplete {
@@ -61,6 +95,8 @@ function Assert-IndexIsComplete {
     Assert-True ($requiredText -match "Load non-startup memory files only when relevant") "Startup rules must explicitly defer non-startup files until relevant."
     Assert-True ($requiredText -match "raw wording|real intent") "Startup rules must require intent translation before implementation."
     Assert-True ($requiredText -match "context compression|session resume|model switch") "Startup rules must define resume behavior after context resets."
+    Assert-ToolAgnosticText -Text $requiredText -Name "index.json required_before_work"
+    Assert-True ($requiredText -match "explicit UTF-8|UTF-8") "Startup rules must require explicit UTF-8 reads or writes for memory files."
 
     $intentRules = ($index.intent_translation_contract -join "`n")
     Assert-True ($intentRules -match "confirmed facts|open questions") "index.json must define an intent translation contract."
@@ -104,6 +140,8 @@ function Assert-GrowthControlFiles {
     Assert-True ($historyReadme -match "archive") "history/README.md must define archive rules."
     Assert-True ($historyReadme -match "activeContext\.md") "history/README.md must protect activeContext.md from long-term bloat."
     Assert-True ($historyReadme -match "progress\.md") "history/README.md must protect progress.md from long-term bloat."
+    Assert-True ($historyReadme -match "rolling window|active window|近期窗口|滚动窗口") "history/README.md must define rolling-window compaction."
+    Assert-True ($historyReadme -match "archive index|归档索引") "history/README.md must require archive index links."
 }
 
 function Assert-ProjectFastStartupRules {
@@ -135,12 +173,20 @@ function Assert-ProjectFastStartupRules {
     Assert-True ($agentRules -match 'real intent|raw wording') "agentRules.md must require intent translation."
     Assert-True ($agentRules -match 'context compression|resume|model switch') "agentRules.md must define resume behavior after context resets."
     Assert-True ($agentRules -match 'main agent') "agentRules.md must define a main-agent writer for primary memory files."
-    Assert-True ($agentRules -match 'shell redirection|Out-File|Set-Content|Add-Content') "agentRules.md must ban default shell text writes for memory files."
+    Assert-True ($agentRules -match 'default encoding|implicit text output|默认编码|隐式文本输出') "agentRules.md must reject implicit default-encoding writes for memory files."
+    Assert-True ($agentRules -match 'explicit UTF-8|UTF-8') "agentRules.md must require explicit UTF-8 file reads or writes."
+    Assert-True ($agentRules -match 'mojibake|乱码') "agentRules.md must say to stop and repair unreadable mojibake before business edits."
+    Assert-ToolAgnosticText -Text $agentRules -Name "agentRules.md"
     Assert-True ($agentRules -match 'masterTaskLedger\.md') "agentRules.md must mention the master task ledger."
     Assert-True ($agentRules -match 'task-packs') "agentRules.md must mention task packs."
     Assert-True ($agentRules -match 'Requirement Checklist') "agentRules.md must require requirements coverage before completion."
 
     Assert-GrowthControlFiles $memoryPath
+    $progressRulesPath = Join-Path $memoryPath "progress.md"
+    if (Test-Path $progressRulesPath) {
+        $progressRules = Get-Content -Raw -Encoding UTF8 $progressRulesPath
+        Assert-PrimaryMemoryWindowRules -ActiveContext $activeContext -Progress $progressRules -Name $memoryPath
+    }
 
     foreach ($adapterName in @("AGENTS.md", "CLAUDE.md")) {
         $adapterPath = Join-Path $Root $adapterName
@@ -151,6 +197,7 @@ function Assert-ProjectFastStartupRules {
             Assert-True ($adapterText -match 'real intent|raw wording') "$adapterName must require intent translation."
             Assert-True ($adapterText -match 'context compression|checkpoint|resume|model switch') "$adapterName must define checkpointed resume behavior."
             Assert-True ($adapterText -match 'Startup Summary') "$adapterName must require a startup summary after Fast startup."
+            Assert-ToolAgnosticText -Text $adapterText -Name $adapterName
         }
     }
 }
@@ -174,7 +221,10 @@ function Assert-FastStartupRules {
     Assert-True ($agentRules -match 'real intent|raw wording') "agentRules.md must require intent translation."
     Assert-True ($agentRules -match 'context compression|resume|model switch') "agentRules.md must define resume behavior after context resets."
     Assert-True ($agentRules -match 'main agent') "agentRules.md must define a main-agent writer for primary memory files."
-    Assert-True ($agentRules -match 'shell redirection|Out-File|Set-Content|Add-Content') "agentRules.md must ban default shell text writes for memory files."
+    Assert-True ($agentRules -match 'default encoding|implicit text output|默认编码|隐式文本输出') "agentRules.md must reject implicit default-encoding writes for memory files."
+    Assert-True ($agentRules -match 'explicit UTF-8|UTF-8') "agentRules.md must require explicit UTF-8 file reads or writes."
+    Assert-True ($agentRules -match 'mojibake|乱码') "agentRules.md must say to stop and repair unreadable mojibake before business edits."
+    Assert-ToolAgnosticText -Text $agentRules -Name ".ai_memory-pro/agentRules.md"
     Assert-True ($agentRules -match 'masterTaskLedger\.md') "agentRules.md must mention the master task ledger."
     Assert-True ($agentRules -match 'task-packs') "agentRules.md must mention task packs."
     Assert-True ($agentRules -match 'Requirement Checklist') "agentRules.md must require requirements coverage before completion."
@@ -182,6 +232,7 @@ function Assert-FastStartupRules {
     $progressRules = Get-Content -Raw -Encoding UTF8 (Join-Path $Root ".ai_memory-pro\progress.md")
     Assert-True ($progressRules -match 'main agent') "progress.md must define main-agent ownership."
     Assert-True ($progressRules -match 'checkpoint') "progress.md must require checkpoint-based writes."
+    Assert-PrimaryMemoryWindowRules -ActiveContext $activeContext -Progress $progressRules -Name ".ai_memory-pro"
 
     Assert-GrowthControlFiles (Join-Path $Root ".ai_memory-pro")
 
@@ -193,6 +244,7 @@ function Assert-FastStartupRules {
         Assert-True ($adapterText -match 'real intent|raw wording') "$($adapter.Name) must require intent translation."
         Assert-True ($adapterText -match 'context compression|checkpoint|resume|model switch') "$($adapter.Name) must define checkpointed resume behavior."
         Assert-True ($adapterText -match 'Startup Summary') "$($adapter.Name) must require a startup summary after Fast startup."
+        Assert-ToolAgnosticText -Text $adapterText -Name $adapter.Name
     }
 }
 

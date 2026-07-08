@@ -11,8 +11,10 @@
 7. 完成启动后必须输出一行 Startup Summary：已读文件、当前状态、是否需要读取 `masterTaskLedger.md` 或 `task-packs/*.md`
 8. 长任务、多 Agent、跨模块任务必须读取或创建 `masterTaskLedger.md` 任务；复杂任务必须读取或创建对应 `task-packs/*.md`，并遵守 required reading / do not read
 9. 改代码前重读目标文件最新快照，并先识别本轮“禁止误伤项”
-10. 连续开发、多 Agent 并行、准备中断或担心 context compression / 模型切换前，必须更新 `activeContext.md` 的恢复锚点
-11. 无真实执行证据和 Requirement Checklist 不得结案
-12. 如果发生 context compression、模型切换或工具切换，先重跑 Fast startup，再从 `activeContext.md` 的最近 checkpoint 继续，而不是靠聊天记忆重建上下文
+10. 使用当前环境可用的文件读取、搜索、编辑和写入等价能力 (current environment equivalent capability)；不要要求、假设或抱怨某个固定工具 API 名称
+11. 读取或修改记忆文件必须使用 explicit UTF-8；若出现 mojibake/乱码，先修复可读性再继续业务改动
+12. 连续开发、多 Agent 并行、准备中断或担心 context compression / 模型切换前，必须更新 `activeContext.md` 的恢复锚点，并让 `activeContext.md` 保持活跃窗口、`progress.md` 保持滚动窗口
+13. 无真实执行证据和 Requirement Checklist 不得结案
+14. 如果发生 context compression、模型切换或工具切换，先重跑 Fast startup，再从 `activeContext.md` 的最近 checkpoint 继续，而不是靠聊天记忆重建上下文
 
 如有冲突，以 `.ai_memory/projectbrief.md` 为准。

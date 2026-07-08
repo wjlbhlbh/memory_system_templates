@@ -1,6 +1,9 @@
 # Changelog
 
 ## Unreleased
+- 去除入口规则对具体文件工具 API 名称的依赖，改为使用当前环境可用的等价能力。
+- 增加 mojibake/乱码规避规则和验证检查，要求记忆文件显式保持 UTF-8 可读。
+- 将 `activeContext.md` / `progress.md` 优化为活跃窗口、滚动窗口和归档索引模式，降低超大型项目接手 token 成本。
 - 增加 Fast startup：启动时只读取 `startup_order`，其余记忆文件按任务相关性加载。
 - 移除 `activeContext.md` 中的示例 WIP，避免 Agent 误判为未闭合任务。
 - 调整 L1 任务策略为默认直接执行，减少反复等待确认。

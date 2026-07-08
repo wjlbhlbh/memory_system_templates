@@ -19,7 +19,8 @@ AI 编程最常见的失控点不是“不会写代码”，而是上下文断�
 - 默认支持“减少打扰的一口气交付”：小决策由 Agent 保守判断，除硬性阻塞外持续推进。
 - 上下文压缩、模型切换、工具切换后，先根据 `activeContext.md` 恢复最近 checkpoint，而不是重新猜前文。
 - 默认执行源码提交与本地备份分层：源码进 Git，备份进 `.archive/`，运行产物进 `.gitignore`。
-- Agent 可读文件统一使用 UTF-8 无 BOM，降低跨工具读取或写入异常概率。
+- 入口规则不绑定具体工具 API 名称；Agent 使用当前环境可用的等价文件读取、搜索、编辑和写入能力。
+- Agent 可读文件统一使用 UTF-8 无 BOM；如出现 mojibake/乱码，先修复可读性再继续业务改动。
 
 ## 最少人工步骤
 
@@ -90,6 +91,7 @@ AI 编程最常见的失控点不是“不会写代码”，而是上下文断�
 6. **复杂任务用任务上下文包，不靠全量读记忆**
    - `task-packs/*.md` 明确本任务 required reading 和 do not read。
    - 完成前必须输出 Requirement Checklist，逐条对应需求、实现状态和验证证据。
+   - `activeContext.md` 只保留活跃窗口，`progress.md` 只保留滚动窗口和归档索引。
    - 旧日志、长交接和过期细节移入 `history/`，防止 `activeContext.md` / `progress.md` 变成大杂烩。
 
 更完整的连续开发协议见 [docs/CONTINUOUS_DEVELOPMENT_PROTOCOL.md](docs/CONTINUOUS_DEVELOPMENT_PROTOCOL.md)。
@@ -177,9 +179,12 @@ powershell -ExecutionPolicy Bypass -File D:\AIbiancheng\memory_system_templates\
 
 本仓库提供一个无需外部依赖的验证脚本，用来检查：
 - Agent 可读文件是否为严格 UTF-8 无 BOM。
+- Agent 可读文件是否出现疑似 mojibake/乱码。
 - Pro 的 `index.json` 是否能解析。
 - `startup_order` / `bootstrap_order` 是否引用了真实存在的文件。
 - 启动规则是否避免全量读取记忆文件，并引导 Agent 快速进入开发。
+- 启动规则和工具入口模板是否避免绑定具体文件工具 API 名称。
+- `activeContext.md` / `progress.md` 是否具备活跃窗口、滚动窗口和归档索引规则。
 - 多 LLM 协作所需的 `masterTaskLedger.md`、`task-packs/README.md`、`history/README.md` 是否存在且包含关键规则。
 - 工具入口模板是否要求 Startup Summary 和 Requirement Checklist。
 - `init-memory.ps1` 和 `sync-tool-adapters.ps1` 生成的文件是否符合编码要求。

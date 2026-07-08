@@ -76,7 +76,7 @@
 
 ## 11. 文件编码与完整性
 - Agent 可读文件默认使用 UTF-8 无 BOM，尤其是 `.md`、`.json`、`.yaml`、`.yml`、`.txt`、工具入口模板。
-- 写文件必须显式指定编码，禁止依赖 PowerShell、编辑器或系统默认编码。
-- 修改记忆文件时，禁止使用 shell 重定向、`Out-File`、`Set-Content`、`Add-Content` 或其他默认文本输出；只允许显式 UTF-8 写入或 patch-based 编辑。
+- 写文件必须显式指定编码，禁止依赖任何工具、编辑器或系统默认编码。
+- 修改记忆文件时，任何工具、命令、编辑器或补丁方式都可以使用，但必须显式保持 UTF-8 无 BOM，不得依赖默认编码或隐式文本输出 (default encoding / implicit text output)。
 - 读取失败、乱码、BOM 导致解析异常、JSON 无法解析时，先修复可读性再继续业务改动。
 - 修改记忆文件后应检查：关键文件可读、`index.json` 可解析、`startup_order` / `bootstrap_order` 不引用不存在的文件。
