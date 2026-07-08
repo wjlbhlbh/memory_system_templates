@@ -69,6 +69,8 @@
 
 任务包的价值不只是“告诉 AI 读什么”，更是“告诉 AI 不读什么”。这能显著减少上下文浪费，也能避免模型被无关历史带偏。
 
+模块级记忆也遵守同一个原则。先用 `module-map.json` 根据本次触碰路径匹配模块，再只读取对应 `modules/*.md` overlay。模块 overlay 只记录该模块长期稳定的边界、接口、坑点和验证口径，不写全项目流水账，也不替代源代码、测试和主记忆文件。
+
 ## 6. 多 Agent 并行时必须有主线记录人
 
 多子 Agent 并行不是问题，没人维护主线才是问题。
@@ -104,6 +106,8 @@
 - 从头再读所有记忆文件
 - 因为上下文丢了就重新走一遍前期分析
 
+如果恢复需要旧日志、历史交接或过期任务细节，应先检索 `history/index.jsonl`，再打开命中的归档文件。可用根目录 `search-memory.ps1 -Query <text>` 或 `search-memory.ps1 -Tag <tag>` 缩小读取范围。
+
 ## 8. 完成前必须做需求覆盖复核
 
 “测试通过”不等于“需求完成”。复杂功能结束前必须输出 Requirement Checklist：
@@ -125,19 +129,25 @@
 - 记忆文件必须显式保持 UTF-8 无 BOM，写入后确认内容可读
 - 长任务必须按 checkpoint 持续写回，不要最后一次性重写整份记忆
 - 过期日志、长交接和旧任务细节移入 `history/`，避免启动文件持续膨胀
+- `decisionLog.md`、`interfaces.md`、`pitfalls.md` 这类长期事实必须带 `status`、`last_verified`、`confidence`、`superseded_by` 字段，避免旧判断在后续项目阶段被当成新事实继续传播
 
 ## 10. 这套模板现在落地了什么
 
 本仓库已经把以上协议前置到：
 
+- `.ai_memory-pro/MEMORY.md`
 - `.ai_memory-pro/index.json`
 - `.ai_memory-pro/projectbrief.md`
 - `.ai_memory-pro/agentRules.md`
 - `.ai_memory-pro/activeContext.md`
 - `.ai_memory-pro/masterTaskLedger.md`
+- `.ai_memory-pro/module-map.json`
+- `.ai_memory-pro/modules/README.md`
 - `.ai_memory-pro/task-packs/README.md`
 - `.ai_memory-pro/history/README.md`
+- `.ai_memory-pro/history/index.jsonl`
 - `.ai_memory-pro/progress.md`
+- `search-memory.ps1`
 - `tool_adapters/*.template.md`
 - `tests/verify-memory-system.ps1`
 

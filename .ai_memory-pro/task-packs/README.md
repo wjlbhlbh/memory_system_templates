@@ -11,10 +11,25 @@
 ## 文件命名
 - 推荐：`TASK-001-short-title.md`
 - 与 `masterTaskLedger.md` 的任务 ID 保持一致。
+- 每个任务包必须在 `masterTaskLedger.md` 中有对应任务条目；任务包和账本互为 backlink。
+
+## 生命周期状态
+- `[DRAFT]`：任务包草稿，尚未可认领。
+- `[READY]`：边界、required reading、do not read 和 acceptance 已明确，可认领。
+- `[IN_PROGRESS]`：已有主 Agent 或子 Agent 认领，必须同步 locked files。
+- `[VERIFYING]`：实现已完成，正在跑验收或人工 QA。
+- `[DONE]`：Requirement Checklist 已覆盖，verification evidence 已记录。
+- `[ARCHIVED]`：任务包详情已折叠到 `history/`，账本保留索引。
 
 ## 任务包模板
 ```markdown
 # Task Pack: TASK-001 任务标题
+
+## status
+- **state**: [DRAFT]
+- **ledger backlink**: `masterTaskLedger.md#TASK-001`
+- **owner**:
+- **last_verified**:
 
 ## 0. required reading
 1. 本文档
@@ -59,5 +74,7 @@
 
 ## 使用规则
 - 一个任务包只服务一个可验证任务。
+- 一个任务包必须有唯一状态，并与 `masterTaskLedger.md` 任务状态保持一致。
+- 任务包创建、认领、验证、完成、归档时，都要同步账本 backlink。
 - 任务包过长时，优先拆任务，而不是继续追加内容。
 - 任务完成后，不把大段日志粘在任务包里；只保留关键 verification evidence，长日志归档到 `history/`。

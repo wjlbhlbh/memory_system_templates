@@ -1,6 +1,10 @@
 # Changelog
 
 ## Unreleased
+- 新增 `MEMORY.md` 短启动导航、`memory_types` 记忆分类、`module-map.json` 模块记忆映射和 `modules/README.md` overlay 规则。
+- 新增 `history/index.jsonl` 可检索归档索引和 `search-memory.ps1`，归档历史先搜索再按需读取。
+- 增加任务包生命周期、`masterTaskLedger.md` backlink 规则，以及长期事实的 `status` / `last_verified` / `confidence` / `superseded_by` 字段。
+- 扩展验证脚本：检查短启动 hub、模块记忆、历史检索层、任务包生命周期、freshness 字段、主记忆行数预算、重复 checkpoint 和疑似敏感信息。
 - 去除入口规则对具体文件工具 API 名称的依赖，改为使用当前环境可用的等价能力。
 - 增加 mojibake/乱码规避规则和验证检查，要求记忆文件显式保持 UTF-8 可读。
 - 将 `activeContext.md` / `progress.md` 优化为活跃窗口、滚动窗口和归档索引模式，降低超大型项目接手 token 成本。

@@ -15,6 +15,10 @@
 - **影响范围**:
 - **回滚条件**:
 - **关联文件/模块**:
+- **status**: active / stale / superseded
+- **last_verified**:
+- **confidence**: high / medium / low
+- **superseded_by**: none / DEC-xxx
 
 ## 决策记录
 - 暂无

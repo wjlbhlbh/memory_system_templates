@@ -1,14 +1,16 @@
 {
-  "version": "1.1.1",
+  "version": "1.2.0",
   "memory_system": "professional-project-memory",
   "startup_order": [
     "index.json",
+    "MEMORY.md",
     "projectbrief.md",
     "activeContext.md",
     "agentRules.md"
   ],
   "bootstrap_order": [
     "projectbrief.md",
+    "MEMORY.md",
     "activeContext.md",
     "index.json",
     "agentRules.md",
@@ -18,12 +20,15 @@
     "decisionLog.md",
     "backlog.md",
     "masterTaskLedger.md",
+    "module-map.json",
+    "modules/README.md",
     "task-packs/README.md",
     "pitfalls.md",
     "interfaces.md",
     "progress.md",
     "architecture.md",
-    "history/README.md"
+    "history/README.md",
+    "history/index.jsonl"
   ],
   "required_before_work": [
     "Fast startup: read index.json, then only startup_order files.",
@@ -39,6 +44,7 @@
     "Read the latest physical snapshot of target files before editing.",
     "Use the current environment's available file read, search, edit, and write capability; do not require or complain about a specific tool API name.",
     "For long-running, multi-agent, or cross-module work, read masterTaskLedger.md and claim or create a task before implementation.",
+    "For module-specific work, use module-map.json to load only matching module memory overlays.",
     "For complex tasks that cannot be held in one small context, create or read the matching task-packs/*.md file; obey its required reading and do not read boundaries.",
     "Before marking work complete, produce a Requirement Checklist that maps every requested behavior and boundary to implementation status and verification evidence.",
     "Do not mark work as complete without execution evidence.",
@@ -63,6 +69,49 @@
     "Primary memory files activeContext.md and progress.md are single-writer files owned by the main agent during a task.",
     "Write decisionLog.md, backlog.md, pitfalls.md, interfaces.md, or architecture.md only when the information will matter after a later resume."
   ],
+  "memory_types": {
+    "procedural": [
+      "MEMORY.md",
+      "agentRules.md",
+      "engineeringRules.md",
+      "modules/README.md",
+      "task-packs/README.md",
+      "history/README.md"
+    ],
+    "semantic": [
+      "projectbrief.md",
+      "systemPatterns.md",
+      "techContext.md",
+      "architecture.md",
+      "interfaces.md",
+      "decisionLog.md",
+      "pitfalls.md",
+      "module-map.json"
+    ],
+    "episodic": [
+      "activeContext.md",
+      "progress.md",
+      "masterTaskLedger.md",
+      "backlog.md",
+      "task-packs/*.md",
+      "history/*.md",
+      "history/index.jsonl"
+    ]
+  },
+  "module_memory": {
+    "map": "module-map.json",
+    "overlay_root": "modules/",
+    "load_rule": "Load matching module memory only when touched files match module-map.json path_globs."
+  },
+  "health_checks": [
+    "MEMORY.md stays under 200 lines.",
+    "activeContext.md stays under 90 lines and keeps Resume Reads valid.",
+    "progress.md stays under 120 lines and has no duplicate checkpoint ids.",
+    "history/index.jsonl records include date, tags, summary, path, and restore_required.",
+    "task-packs/*.md files are linked from masterTaskLedger.md.",
+    "decisionLog.md, interfaces.md, and pitfalls.md include status, last_verified, confidence, and superseded_by fields.",
+    "Agent-readable files must be UTF-8 without BOM and must not contain obvious secret material."
+  ],
   "resume_protocol": [
     "On context compression, model switch, or tool switch, rerun Fast startup before taking any new action.",
     "Reopen the latest checkpoint in activeContext.md, then read only the files explicitly listed there under resume reads.",
@@ -70,6 +119,7 @@
     "Resume from the last verified checkpoint instead of replaying the full conversation from memory."
   ],
   "file_roles": {
+    "MEMORY.md": "Short human-readable memory hub and startup navigation index.",
     "projectbrief.md": "Goals, scope, constraints.",
     "activeContext.md": "Current state, intent translation, handoff checkpoint, and bounded active window.",
     "agentRules.md": "Short startup rules.",
@@ -79,11 +129,14 @@
     "decisionLog.md": "Long-term decisions.",
     "backlog.md": "Open debts.",
     "masterTaskLedger.md": "Global task ledger for multi-agent and long-running work.",
+    "module-map.json": "Path glob to module memory overlay map.",
+    "modules/README.md": "Rules and template for module-level memory overlays.",
     "task-packs/README.md": "Template and rules for self-contained task context packs.",
     "pitfalls.md": "Known traps.",
     "interfaces.md": "Contracts.",
     "progress.md": "Verified progress, checkpoint rolling window, and archive index.",
     "architecture.md": "Architecture map.",
-    "history/README.md": "Archive rules for long-term memory growth control."
+    "history/README.md": "Archive rules for long-term memory growth control.",
+    "history/index.jsonl": "Searchable archive index."
   }
 }

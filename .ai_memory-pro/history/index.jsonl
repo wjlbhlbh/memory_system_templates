@@ -1,0 +1,1 @@
+{"date":"__DATE__","type":"schema","tags":["memory-index","archive"],"summary":"Seed record documenting history/index.jsonl schema. Add one JSON object per archived item.","path":"history/README.md","task_id":"none","source_file":"history/README.md","verification_evidence":"template seed","restore_required":false}

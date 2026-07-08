@@ -13,6 +13,10 @@
 - **错误方案**:
 - **正确处理方式**:
 - **关联模块**:
+- **status**: active / stale / superseded
+- **last_verified**:
+- **confidence**: high / medium / low
+- **superseded_by**: none / PIT-xxx
 
 ## 已知踩坑
 - 暂无

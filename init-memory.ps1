@@ -1,4 +1,4 @@
-﻿param(
+param(
     [ValidateSet("Pro")]
     [string]$Mode = "Pro",
     [string]$TargetPath = ".",
@@ -12,19 +12,19 @@ $ErrorActionPreference = "Stop"
 function Detect-TechStack {
     param([string]$Root)
 
-    $frontend = "待确认"
-    $backend = "待确认"
-    $database = "待确认"
-    $test = "待确认"
+    $frontend = "TBD"
+    $backend = "TBD"
+    $database = "TBD"
+    $test = "TBD"
 
-    if (Test-Path (Join-Path $Root "package.json")) { $frontend = "Node.js / 前端工程（检测到 package.json）" }
-    if (Test-Path (Join-Path $Root "requirements.txt")) { $backend = "Python（检测到 requirements.txt）" }
-    elseif (Test-Path (Join-Path $Root "pyproject.toml")) { $backend = "Python（检测到 pyproject.toml）" }
-    elseif (Test-Path (Join-Path $Root "pom.xml")) { $backend = "Java（检测到 pom.xml）" }
-    elseif (Test-Path (Join-Path $Root "Cargo.toml")) { $backend = "Rust（检测到 Cargo.toml）" }
+    if (Test-Path (Join-Path $Root "package.json")) { $frontend = "Node.js / frontend project (package.json detected)" }
+    if (Test-Path (Join-Path $Root "requirements.txt")) { $backend = "Python (requirements.txt detected)" }
+    elseif (Test-Path (Join-Path $Root "pyproject.toml")) { $backend = "Python (pyproject.toml detected)" }
+    elseif (Test-Path (Join-Path $Root "pom.xml")) { $backend = "Java (pom.xml detected)" }
+    elseif (Test-Path (Join-Path $Root "Cargo.toml")) { $backend = "Rust (Cargo.toml detected)" }
 
-    if (Test-Path (Join-Path $Root "docker-compose.yml")) { $database = "请查看 docker-compose.yml 确认" }
-    elseif (Test-Path (Join-Path $Root "docker-compose.yaml")) { $database = "请查看 docker-compose.yaml 确认" }
+    if (Test-Path (Join-Path $Root "docker-compose.yml")) { $database = "Check docker-compose.yml" }
+    elseif (Test-Path (Join-Path $Root "docker-compose.yaml")) { $database = "Check docker-compose.yaml" }
 
     if (Test-Path (Join-Path $Root "pytest.ini")) { $test = "pytest" }
     elseif (Test-Path (Join-Path $Root "vitest.config.ts")) { $test = "Vitest" }
@@ -201,20 +201,20 @@ function Detect-VersionRequirements {
     }
 
     if ($pythonVersion) {
-        $items.Add("- **Python 版本要求**：$pythonVersion（来源：$pythonSource）")
+        $items.Add("- **Python version requirement**: $pythonVersion (source: $pythonSource)")
     }
     if ($nodeVersion) {
-        $items.Add("- **Node 版本要求**：$nodeVersion（来源：$nodeSource）")
+        $items.Add("- **Node version requirement**: $nodeVersion (source: $nodeSource)")
     }
     if ($javaVersion) {
-        $items.Add("- **Java 版本要求**：$javaVersion（来源：$javaSource）")
+        $items.Add("- **Java version requirement**: $javaVersion (source: $javaSource)")
     }
     if ($rustVersion) {
-        $items.Add("- **Rust 版本要求**：$rustVersion（来源：$rustSource）")
+        $items.Add("- **Rust version requirement**: $rustVersion (source: $rustSource)")
     }
 
     if ($items.Count -eq 0) {
-        return "- **运行时/工具链版本要求**：未自动识别到明确要求；如项目无强约束，可留空。"
+        return "- **Runtime/toolchain version requirement**: no explicit requirement detected; leave empty if the project has no hard constraint."
     }
 
     return ($items -join "`r`n")
@@ -231,7 +231,7 @@ if (-not $ProjectName) {
 }
 
 if (Test-Path $destination) {
-    throw "目标路径已存在: $destination"
+    throw "Target path already exists: $destination"
 }
 
 Copy-Item -Recurse -Force $templatePath $destination
@@ -267,10 +267,27 @@ $commonReplacements = @{
 }
 
 Get-ChildItem -Path $destination -Recurse -File | ForEach-Object {
-    if ($_.Extension -in @(".md", ".json")) {
+    if ($_.Extension -in @(".md", ".json", ".jsonl")) {
         Replace-InFile -Path $_.FullName -Replacements $commonReplacements
     }
 }
+
+function Copy-MemoryHelperScript {
+    param(
+        [string]$SourceFileName,
+        [string]$DestinationFileName
+    )
+
+    $source = Join-Path $scriptRoot $SourceFileName
+    $destinationFile = Join-Path $resolvedTarget $DestinationFileName
+
+    if ((Test-Path $source) -and (-not (Test-Path $destinationFile))) {
+        $content = [System.IO.File]::ReadAllText($source, [System.Text.Encoding]::UTF8)
+        Write-TextFile -Path $destinationFile -Content $content
+    }
+}
+
+Copy-MemoryHelperScript -SourceFileName "search-memory.ps1" -DestinationFileName "search-memory.ps1"
 
 function Copy-AdapterTemplate {
     param(
@@ -282,7 +299,7 @@ function Copy-AdapterTemplate {
     $adapterDestination = Join-Path $resolvedTarget $DestinationFileName
 
     if (Test-Path $adapterDestination) {
-        throw "工具入口文件已存在: $adapterDestination"
+        throw "Tool entry file already exists: $adapterDestination"
     }
 
     $content = [System.IO.File]::ReadAllText($adapterTemplate, [System.Text.Encoding]::UTF8)
@@ -291,7 +308,7 @@ function Copy-AdapterTemplate {
 }
 
 $generatedAdapters = New-Object System.Collections.Generic.List[string]
-$adapterSummary = "未生成工具入口文件"
+$adapterSummary = "No tool entry file generated"
 if ($Adapter -ne "None") {
     switch ($Adapter) {
         "Common" {
@@ -315,46 +332,46 @@ if ($Adapter -ne "None") {
         }
     }
 
-    $adapterSummary = "已生成工具入口文件：$($generatedAdapters -join '、')"
+    $adapterSummary = "Generated tool entry files: $($generatedAdapters -join ', ')"
 }
 
 $todoPath = Join-Path $destination "SETUP_TODO.md"
 $todo = @"
-# 初始化待补事项 (Setup TODO)
+# Setup TODO
 
-初始化时间：$dateText
-项目名称：$ProjectName
-项目路径：$resolvedTarget
-模板模式：Pro
-工具适配器：$Adapter
+Initialized at: $dateText
+Project name: $ProjectName
+Project path: $resolvedTarget
+Template mode: Pro
+Tool adapter: $Adapter
 
-## 只需要优先补这些
-1. 在 projectbrief.md 中补齐业务目标、目标用户、成功标准、项目边界、明确非目标和不可破坏规则
-2. 在 techContext.md 中确认自动探测出的技术栈是否准确
-   - 不需要反复维护“Windows / PowerShell / 个人机器版本”这类稳定宿主机信息
-   - 只有项目明确依赖某个运行时或工具链版本时，才补对应版本要求
-   - 若脚本已识别出版本要求，优先核对其来源是否符合项目真实约束
-3. 补 interfaces.md 中最关键的 1-3 个接口
-4. 补 architecture.md 中总体架构与核心模块
-5. 第一次进入长任务前，按 activeContext.md 模板填写“用户原话 / 真实意图 / 成功标准 / 明确非目标 / 恢复必读文件”
-6. 如果项目需要多 LLM 交替开发，先在 masterTaskLedger.md 拆出一次会话可闭环的任务
-7. 如果单个任务上下文过大，在 task-packs/ 下创建任务包，明确 required reading / do not read / acceptance / handoff
-8. 默认推荐保留根目录 AGENTS.md 和 CLAUDE.md，避免后续切换工具时忘记补入口文件
-9. 如果你没有使用 -Adapter 自动生成入口文件，再从 tool_adapters/ 里选择对应模板手工复制到项目根目录
+## Fill these first
+1. Complete projectbrief.md with business goals, users, success criteria, scope, non-goals, and do-not-break rules.
+2. Check techContext.md and confirm detected stack/version requirements.
+   - Do not repeatedly maintain stable host-machine facts such as Windows, PowerShell, or local machine versions.
+   - Add runtime/toolchain versions only when the project truly depends on them.
+   - If this script detected version requirements, verify that the source is a real project constraint.
+3. Add the top 1-3 critical contracts in interfaces.md.
+4. Fill architecture.md with the architecture map and core modules.
+5. Before the first long task, fill activeContext.md with raw wording, real intent, success criteria, non-goals, and Resume Reads.
+6. If the project needs multiple LLM handoffs, split tasks in masterTaskLedger.md.
+7. If a task has too much context, create a task pack under task-packs/ with required reading, do not read, acceptance, and handoff.
+8. Keep root AGENTS.md and CLAUDE.md when possible so tool switching remains easy.
+9. If -Adapter did not generate entry files, copy the needed template from tool_adapters/ manually.
 
-## 可以后补的
+## Can be filled later
 - decisionLog.md
 - backlog.md
 - pitfalls.md
 - progress.md
-- history/ 下的归档文件；只有旧日志或过期交接变长后再归档
+- history/ archives; create them only when old logs or stale handoffs become long.
 
-## 初始化结果
-- `.ai_memory` 已生成
-- 项目名、路径、日期、操作系统、默认终端已自动填入
-- 宿主机静态环境信息默认无需你手工重复维护
+## Initialization result
+- `.ai_memory` generated
+- Project name, path, date, OS, and shell placeholders filled
+- Static host facts usually do not need repeated manual maintenance
 - $adapterSummary
-- 当前状态已设为可直接开始工作的初始态
+- Initial state is ready for first real task
 "@
 Write-TextFile -Path $todoPath -Content $todo
 

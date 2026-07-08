@@ -48,6 +48,14 @@ AI 编程最常见的失控点不是“不会写代码”，而是上下文断�
 - 单文件脚本、小型 Demo 可以少填字段，但不再维护单独简版模板。
 - 有后端 / 前端 / 数据库 / 部署 / 测试链路或长期商业项目时，完整维护 Pro 文件。
 
+## 本轮 P0-P2 优化落地
+
+- P0：入口规则改为工具无关表达，不再要求或抱怨某个固定文件工具名；脚本源码保持 ASCII，Agent 可读文件保持 UTF-8 无 BOM，并通过验证脚本拦截 mojibake/乱码和疑似敏感信息。
+- P1：新增 `MEMORY.md` 作为短启动导航，`index.json` 增加 procedural / semantic / episodic 记忆分类，`activeContext.md` 和 `progress.md` 继续保持活跃窗口与滚动窗口职责。
+- P1：新增 `history/index.jsonl` 和根目录 `search-memory.ps1`，旧日志、长交接、过期细节先进入可检索归档索引，再按需打开具体归档文件。
+- P2：新增 `module-map.json` 与 `modules/README.md`，超大型项目可以按路径加载模块级记忆 overlay，避免接手任务时全量阅读项目历史。
+- P2：任务包增加 DRAFT / READY / IN_PROGRESS / VERIFYING / DONE / ARCHIVED 生命周期和账本 backlink；`decisionLog.md`、`interfaces.md`、`pitfalls.md` 增加状态、最后验证时间、可信度和替代关系字段。
+
 ## 工具接入
 `tool_adapters/` 目录里提供了不同 AI 工具的入口模板。核心思想一致：
 
@@ -62,7 +70,7 @@ AI 编程最常见的失控点不是“不会写代码”，而是上下文断�
 
 ## 针对实战问题的强化
 
-最近模板补强了 4 个容易失控的点：
+最近模板补强了这些容易失控的点：
 
 1. **模糊需求先翻译，不允许直接按字面编码**
    - 先写清用户原话、真实意图、成功标准、明确非目标。
@@ -180,14 +188,18 @@ powershell -ExecutionPolicy Bypass -File D:\AIbiancheng\memory_system_templates\
 本仓库提供一个无需外部依赖的验证脚本，用来检查：
 - Agent 可读文件是否为严格 UTF-8 无 BOM。
 - Agent 可读文件是否出现疑似 mojibake/乱码。
+- Agent 可读文件是否包含疑似密钥、令牌、私钥或带密码连接串。
 - Pro 的 `index.json` 是否能解析。
 - `startup_order` / `bootstrap_order` 是否引用了真实存在的文件。
+- `MEMORY.md` 是否保持短启动导航职责。
+- `memory_types`、`module-map.json`、`modules/README.md`、`history/index.jsonl` 是否完整。
 - 启动规则是否避免全量读取记忆文件，并引导 Agent 快速进入开发。
 - 启动规则和工具入口模板是否避免绑定具体文件工具 API 名称。
 - `activeContext.md` / `progress.md` 是否具备活跃窗口、滚动窗口和归档索引规则。
 - 多 LLM 协作所需的 `masterTaskLedger.md`、`task-packs/README.md`、`history/README.md` 是否存在且包含关键规则。
+- 任务包生命周期、账本 backlink、长期事实 freshness 字段是否存在。
 - 工具入口模板是否要求 Startup Summary 和 Requirement Checklist。
-- `init-memory.ps1` 和 `sync-tool-adapters.ps1` 生成的文件是否符合编码要求。
+- `init-memory.ps1`、`sync-tool-adapters.ps1` 和 `search-memory.ps1` 生成或读取的文件是否符合编码要求。
 
 运行：
 

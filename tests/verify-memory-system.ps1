@@ -37,6 +37,7 @@ function Assert-Utf8NoBom {
     $hasUtf8Bom = $bytes.Length -ge 3 -and $bytes[0] -eq 0xEF -and $bytes[1] -eq 0xBB -and $bytes[2] -eq 0xBF
     Assert-True (-not $hasUtf8Bom) "UTF-8 BOM is not allowed for agent-readable files: $relative"
     Assert-NoMojibakeText -Text $text -RelativePath $relative
+    Assert-NoSensitiveMaterial -Text $text -RelativePath $relative
 }
 
 function Assert-NoMojibakeText {
@@ -47,6 +48,26 @@ function Assert-NoMojibakeText {
 
     $mojibakePattern = "\uFFFD|\u00C3.|\u00C2.|\u00E2\u20AC|\u9225|\u951B|\u9286|\u4E53|\u8E47\uE102\u20AC|\u6D93\u20AC|\u9428"
     Assert-True ($Text -notmatch $mojibakePattern) "Possible mojibake text in $RelativePath. Read/write agent-readable files as explicit UTF-8, then repair the readable source text before continuing."
+}
+
+function Assert-NoSensitiveMaterial {
+    param(
+        [string]$Text,
+        [string]$RelativePath
+    )
+
+    $secretPatterns = @(
+        "-----BEGIN (RSA |OPENSSH |EC |DSA )?PRIVATE KEY-----",
+        "\bAKIA[0-9A-Z]{16}\b",
+        "\bghp_[A-Za-z0-9_]{30,}\b",
+        "\bsk-[A-Za-z0-9_-]{24,}\b",
+        "\bxox[baprs]-[A-Za-z0-9-]{20,}\b",
+        "(postgres|mysql|mongodb)://[^`"\s]+:[^`"\s]+@"
+    )
+
+    foreach ($pattern in $secretPatterns) {
+        Assert-True ($Text -notmatch $pattern) "Possible secret material in $RelativePath. Memory files must not store credentials, tokens, private keys, or connection strings."
+    }
 }
 
 function Assert-ToolAgnosticText {
@@ -66,10 +87,131 @@ function Assert-PrimaryMemoryWindowRules {
         [string]$Name
     )
 
-    Assert-True ($ActiveContext -match "context budget|active window|rolling window|上下文预算|活跃窗口|滚动窗口") "$Name activeContext.md must define a bounded active window."
+    Assert-True ($ActiveContext -match "context budget|active window|rolling window|bounded active window") "$Name activeContext.md must define a bounded active window."
     Assert-True ($ActiveContext -match "history/|task-packs/") "$Name activeContext.md must point overflow detail to task packs or history."
-    Assert-True ($Progress -match "rolling window|active window|近期窗口|滚动窗口") "$Name progress.md must define a bounded rolling window."
-    Assert-True ($Progress -match "archive index|归档索引|history/") "$Name progress.md must keep archive links instead of unlimited detail."
+    Assert-True ($Progress -match "rolling window|active window") "$Name progress.md must define a bounded rolling window."
+    Assert-True ($Progress -match "archive index|history/") "$Name progress.md must keep archive links instead of unlimited detail."
+}
+
+function Assert-PrimaryMemoryHealth {
+    param([string]$MemoryPath)
+
+    $activeContextPath = Join-Path $MemoryPath "activeContext.md"
+    $progressPath = Join-Path $MemoryPath "progress.md"
+    $activeContext = Get-Content -Raw -Encoding UTF8 $activeContextPath
+    $progress = Get-Content -Raw -Encoding UTF8 $progressPath
+    $activeLines = (Get-Content -Encoding UTF8 $activeContextPath).Count
+    $progressLines = (Get-Content -Encoding UTF8 $progressPath).Count
+
+    Assert-True ($activeLines -le 90) "activeContext.md must stay within its active-window budget; current line count: $activeLines"
+    Assert-True ($progressLines -le 120) "progress.md must stay within its rolling-window budget; current line count: $progressLines"
+
+    $checkpointMatches = [regex]::Matches($progress, "CHK-\d{3}") | ForEach-Object { $_.Value }
+    $duplicates = $checkpointMatches | Group-Object | Where-Object { $_.Count -gt 1 }
+    Assert-True ($duplicates.Count -eq 0) "progress.md must not duplicate checkpoint ids."
+
+    $resumeLine = ($activeContext -split "`n") | Where-Object { $_ -match "Resume Reads" } | Select-Object -First 1
+    if ($resumeLine) {
+        $resumeRefs = [regex]::Matches($resumeLine, '`([^`]+)`') | ForEach-Object { $_.Groups[1].Value }
+        foreach ($ref in $resumeRefs) {
+            if ($ref -match "\.(md|json|jsonl|txt)$") {
+                Assert-True (Test-Path (Join-Path $MemoryPath $ref)) "activeContext.md Resume Reads references missing file: $ref"
+            }
+        }
+    }
+}
+
+function Assert-MemoryHub {
+    param([string]$MemoryPath)
+
+    $memoryHubPath = Join-Path $MemoryPath "MEMORY.md"
+    Assert-True (Test-Path $memoryHubPath) "Missing MEMORY.md hub in $MemoryPath"
+
+    $memoryHub = Get-Content -Raw -Encoding UTF8 $memoryHubPath
+    $lineCount = (Get-Content -Encoding UTF8 $memoryHubPath).Count
+    Assert-True ($lineCount -le 200) "MEMORY.md must stay short enough for startup; current line count: $lineCount"
+    Assert-True ($memoryHub -match "Fast startup|startup_order") "MEMORY.md must explain Fast startup."
+    Assert-True ($memoryHub -match "Current status") "MEMORY.md must expose current status."
+    Assert-True ($memoryHub -match "Resume Reads") "MEMORY.md must point to resume reads."
+    Assert-True ($memoryHub -match "memory type|procedural|semantic|episodic") "MEMORY.md must explain memory types."
+    Assert-True ($memoryHub -match "module-map\.json|modules/README\.md") "MEMORY.md must point to module-level memory."
+    Assert-True ($memoryHub -match "history/index\.jsonl") "MEMORY.md must point to the searchable history index."
+}
+
+function Assert-ModuleMemory {
+    param([string]$MemoryPath)
+
+    $moduleMapPath = Join-Path $MemoryPath "module-map.json"
+    $modulesReadmePath = Join-Path $MemoryPath "modules\README.md"
+    Assert-True (Test-Path $moduleMapPath) "Missing module-map.json in $MemoryPath"
+    Assert-True (Test-Path $modulesReadmePath) "Missing modules/README.md in $MemoryPath"
+
+    $moduleMapText = Get-Content -Raw -Encoding UTF8 $moduleMapPath
+    $moduleMap = $moduleMapText | ConvertFrom-Json
+    Assert-True ($moduleMapText -match "path_globs") "module-map.json must define path_globs."
+    Assert-True ($moduleMapText -match "module_memory") "module-map.json must map modules to memory files."
+    Assert-True ($moduleMap.modules.Count -ge 3) "module-map.json should include common frontend/backend/database overlays."
+
+    $modulesReadme = Get-Content -Raw -Encoding UTF8 $modulesReadmePath
+    Assert-True ($modulesReadme -match "overlay|module memory") "modules/README.md must explain module memory overlays."
+    Assert-True ($modulesReadme -match "path_globs") "modules/README.md must explain path_globs."
+}
+
+function Assert-HistorySearchLayer {
+    param([string]$Root, [string]$MemoryPath)
+
+    $historyIndexPath = Join-Path $MemoryPath "history\index.jsonl"
+    $searchScriptPath = Join-Path $Root "search-memory.ps1"
+    Assert-True (Test-Path $historyIndexPath) "Missing history/index.jsonl in $MemoryPath"
+    Assert-True (Test-Path $searchScriptPath) "Missing search-memory.ps1 at repository root."
+
+    $historyIndexLines = Get-Content -Encoding UTF8 $historyIndexPath | Where-Object { $_.Trim() }
+    Assert-True ($historyIndexLines.Count -ge 1) "history/index.jsonl must contain at least one seed record documenting the schema."
+    foreach ($line in $historyIndexLines) {
+        $record = $line | ConvertFrom-Json
+        Assert-True ($record.date -and $record.tags -and $record.summary -and $record.path) "history/index.jsonl records must include date, tags, summary, and path."
+        Assert-True ($record.PSObject.Properties.Name -contains "restore_required") "history/index.jsonl records must include restore_required."
+    }
+
+    $searchScript = Get-Content -Raw -Encoding UTF8 $searchScriptPath
+    Assert-True ($searchScript -match "history/index\.jsonl") "search-memory.ps1 must search history/index.jsonl."
+    Assert-True ($searchScript -match "Query") "search-memory.ps1 must support query text."
+    Assert-True ($searchScript -match "Tag") "search-memory.ps1 must support tag filtering."
+}
+
+function Assert-TaskPackLifecycle {
+    param([string]$MemoryPath)
+
+    $taskPackReadmePath = Join-Path $MemoryPath "task-packs\README.md"
+    $ledgerPath = Join-Path $MemoryPath "masterTaskLedger.md"
+    $taskPackReadme = Get-Content -Raw -Encoding UTF8 $taskPackReadmePath
+    $ledger = Get-Content -Raw -Encoding UTF8 $ledgerPath
+
+    foreach ($status in @("DRAFT", "READY", "IN_PROGRESS", "VERIFYING", "DONE", "ARCHIVED")) {
+        Assert-True ($taskPackReadme -match $status) "task-packs/README.md must define $status lifecycle state."
+    }
+    Assert-True ($taskPackReadme -match "masterTaskLedger\.md") "task-packs/README.md must require ledger back-links."
+    Assert-True ($ledger -match "task-packs") "masterTaskLedger.md must link ledger tasks to task packs."
+    Assert-True ($ledger -match "backlink") "masterTaskLedger.md must require task-pack backlinks."
+
+    $taskPackFiles = Get-ChildItem -Path (Join-Path $MemoryPath "task-packs") -Filter "*.md" -File |
+        Where-Object { $_.Name -ne "README.md" }
+    foreach ($taskPack in $taskPackFiles) {
+        $relative = $taskPack.FullName.Substring($MemoryPath.Length + 1).Replace("\", "/")
+        Assert-True ($ledger -match [regex]::Escape($relative)) "Task pack has no masterTaskLedger.md reference: $relative"
+    }
+}
+
+function Assert-TrustAndFreshness {
+    param([string]$MemoryPath)
+
+    foreach ($fileName in @("decisionLog.md", "interfaces.md", "pitfalls.md")) {
+        $text = Get-Content -Raw -Encoding UTF8 (Join-Path $MemoryPath $fileName)
+        Assert-True ($text -match "last_verified") "$fileName must include a last_verified field."
+        Assert-True ($text -match "confidence") "$fileName must include a confidence field."
+        Assert-True ($text -match "status") "$fileName must include a status field."
+        Assert-True ($text -match "superseded_by") "$fileName must include a superseded_by field."
+    }
 }
 
 function Assert-IndexIsComplete {
@@ -111,6 +253,13 @@ function Assert-IndexIsComplete {
     Assert-True ($requiredText -match "masterTaskLedger\.md") "Startup rules must mention the master task ledger for multi-agent work."
     Assert-True ($requiredText -match "task-packs") "Startup rules must mention task packs for complex tasks."
     Assert-True ($requiredText -match "Requirement Checklist") "Startup rules must require requirements coverage before completion."
+
+    Assert-True ($index.PSObject.Properties.Name -contains "memory_types") "index.json must classify files by memory type."
+    Assert-True ($index.memory_types.procedural.Count -gt 0) "index.json must define procedural memory files."
+    Assert-True ($index.memory_types.semantic.Count -gt 0) "index.json must define semantic memory files."
+    Assert-True ($index.memory_types.episodic.Count -gt 0) "index.json must define episodic memory files."
+    Assert-True ($index.PSObject.Properties.Name -contains "module_memory") "index.json must point to module-level memory."
+    Assert-True ($index.PSObject.Properties.Name -contains "health_checks") "index.json must define memory health checks."
 }
 
 function Assert-GrowthControlFiles {
@@ -140,8 +289,8 @@ function Assert-GrowthControlFiles {
     Assert-True ($historyReadme -match "archive") "history/README.md must define archive rules."
     Assert-True ($historyReadme -match "activeContext\.md") "history/README.md must protect activeContext.md from long-term bloat."
     Assert-True ($historyReadme -match "progress\.md") "history/README.md must protect progress.md from long-term bloat."
-    Assert-True ($historyReadme -match "rolling window|active window|近期窗口|滚动窗口") "history/README.md must define rolling-window compaction."
-    Assert-True ($historyReadme -match "archive index|归档索引") "history/README.md must require archive index links."
+    Assert-True ($historyReadme -match "rolling window|active window") "history/README.md must define rolling-window compaction."
+    Assert-True ($historyReadme -match "archive index") "history/README.md must require archive index links."
 }
 
 function Assert-ProjectFastStartupRules {
@@ -173,15 +322,21 @@ function Assert-ProjectFastStartupRules {
     Assert-True ($agentRules -match 'real intent|raw wording') "agentRules.md must require intent translation."
     Assert-True ($agentRules -match 'context compression|resume|model switch') "agentRules.md must define resume behavior after context resets."
     Assert-True ($agentRules -match 'main agent') "agentRules.md must define a main-agent writer for primary memory files."
-    Assert-True ($agentRules -match 'default encoding|implicit text output|默认编码|隐式文本输出') "agentRules.md must reject implicit default-encoding writes for memory files."
+    Assert-True ($agentRules -match 'default encoding|implicit text output') "agentRules.md must reject implicit default-encoding writes for memory files."
     Assert-True ($agentRules -match 'explicit UTF-8|UTF-8') "agentRules.md must require explicit UTF-8 file reads or writes."
-    Assert-True ($agentRules -match 'mojibake|乱码') "agentRules.md must say to stop and repair unreadable mojibake before business edits."
+    Assert-True ($agentRules -match 'mojibake') "agentRules.md must say to stop and repair unreadable mojibake before business edits."
     Assert-ToolAgnosticText -Text $agentRules -Name "agentRules.md"
     Assert-True ($agentRules -match 'masterTaskLedger\.md') "agentRules.md must mention the master task ledger."
     Assert-True ($agentRules -match 'task-packs') "agentRules.md must mention task packs."
     Assert-True ($agentRules -match 'Requirement Checklist') "agentRules.md must require requirements coverage before completion."
 
     Assert-GrowthControlFiles $memoryPath
+    Assert-MemoryHub $memoryPath
+    Assert-ModuleMemory $memoryPath
+    Assert-HistorySearchLayer -Root $Root -MemoryPath $memoryPath
+    Assert-TaskPackLifecycle $memoryPath
+    Assert-TrustAndFreshness $memoryPath
+    Assert-PrimaryMemoryHealth $memoryPath
     $progressRulesPath = Join-Path $memoryPath "progress.md"
     if (Test-Path $progressRulesPath) {
         $progressRules = Get-Content -Raw -Encoding UTF8 $progressRulesPath
@@ -221,9 +376,9 @@ function Assert-FastStartupRules {
     Assert-True ($agentRules -match 'real intent|raw wording') "agentRules.md must require intent translation."
     Assert-True ($agentRules -match 'context compression|resume|model switch') "agentRules.md must define resume behavior after context resets."
     Assert-True ($agentRules -match 'main agent') "agentRules.md must define a main-agent writer for primary memory files."
-    Assert-True ($agentRules -match 'default encoding|implicit text output|默认编码|隐式文本输出') "agentRules.md must reject implicit default-encoding writes for memory files."
+    Assert-True ($agentRules -match 'default encoding|implicit text output') "agentRules.md must reject implicit default-encoding writes for memory files."
     Assert-True ($agentRules -match 'explicit UTF-8|UTF-8') "agentRules.md must require explicit UTF-8 file reads or writes."
-    Assert-True ($agentRules -match 'mojibake|乱码') "agentRules.md must say to stop and repair unreadable mojibake before business edits."
+    Assert-True ($agentRules -match 'mojibake') "agentRules.md must say to stop and repair unreadable mojibake before business edits."
     Assert-ToolAgnosticText -Text $agentRules -Name ".ai_memory-pro/agentRules.md"
     Assert-True ($agentRules -match 'masterTaskLedger\.md') "agentRules.md must mention the master task ledger."
     Assert-True ($agentRules -match 'task-packs') "agentRules.md must mention task packs."
@@ -235,6 +390,12 @@ function Assert-FastStartupRules {
     Assert-PrimaryMemoryWindowRules -ActiveContext $activeContext -Progress $progressRules -Name ".ai_memory-pro"
 
     Assert-GrowthControlFiles (Join-Path $Root ".ai_memory-pro")
+    Assert-MemoryHub (Join-Path $Root ".ai_memory-pro")
+    Assert-ModuleMemory (Join-Path $Root ".ai_memory-pro")
+    Assert-HistorySearchLayer -Root $Root -MemoryPath (Join-Path $Root ".ai_memory-pro")
+    Assert-TaskPackLifecycle (Join-Path $Root ".ai_memory-pro")
+    Assert-TrustAndFreshness (Join-Path $Root ".ai_memory-pro")
+    Assert-PrimaryMemoryHealth (Join-Path $Root ".ai_memory-pro")
 
     $adapterFiles = Get-ChildItem -Path (Join-Path $Root "tool_adapters") -File
     foreach ($adapter in $adapterFiles) {
@@ -252,7 +413,7 @@ Write-Output "Checking repository text encodings..."
 $agentReadableFiles = Get-ChildItem -Path $Root -Recurse -File |
     Where-Object {
         $_.FullName -notmatch "\\(\.git|\.archive|node_modules|dist|\.vite|coverage|playwright-report|test-results|logs|\.cache|tmp|tmp-common-adapter-test|tmp-sync-adapter-test)\\" -and
-        $_.Extension -in @(".md", ".json", ".template", ".txt")
+        $_.Extension -in @(".md", ".json", ".jsonl", ".template", ".txt", ".ps1")
     }
 
 foreach ($file in $agentReadableFiles) {

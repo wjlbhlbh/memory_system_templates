@@ -1,0 +1,49 @@
+{
+  "version": "1.0.0",
+  "purpose": "Map touched paths to optional module-level memory overlays.",
+  "usage": [
+    "After Fast startup, compare touched files with path_globs.",
+    "Read matching module_memory files only when the current task touches that module.",
+    "If no glob matches, continue with global memory and source code."
+  ],
+  "modules": [
+    {
+      "id": "frontend",
+      "name": "Frontend",
+      "path_globs": [
+        "src/**/*.{ts,tsx,js,jsx,css,scss}",
+        "app/**/*.{ts,tsx,js,jsx,css,scss}",
+        "pages/**/*.{ts,tsx,js,jsx,css,scss}",
+        "components/**/*.{ts,tsx,js,jsx,css,scss}"
+      ],
+      "module_memory": "modules/README.md",
+      "required_when": "Task changes UI, client state, routes, styling, or browser-visible behavior."
+    },
+    {
+      "id": "backend",
+      "name": "Backend",
+      "path_globs": [
+        "api/**/*",
+        "server/**/*",
+        "src/**/*.{py,go,rs,java,cs,php}",
+        "app/**/route.{ts,js}",
+        "functions/**/*"
+      ],
+      "module_memory": "modules/README.md",
+      "required_when": "Task changes server logic, APIs, background jobs, or service boundaries."
+    },
+    {
+      "id": "database",
+      "name": "Database",
+      "path_globs": [
+        "migrations/**/*",
+        "prisma/**/*",
+        "supabase/**/*",
+        "db/**/*",
+        "**/*schema*.{sql,prisma,ts,js,py}"
+      ],
+      "module_memory": "modules/README.md",
+      "required_when": "Task changes schema, migrations, data access, seed data, or persistence behavior."
+    }
+  ]
+}
