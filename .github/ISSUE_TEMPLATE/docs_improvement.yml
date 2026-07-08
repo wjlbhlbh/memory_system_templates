@@ -1,0 +1,23 @@
+name: Documentation improvement
+description: Improve README, examples, tutorials, roadmap, or translations.
+title: "[Docs]: "
+labels: ["documentation"]
+body:
+  - type: textarea
+    id: location
+    attributes:
+      label: Documentation location
+      description: Which file or section needs improvement?
+      placeholder: README.md / Quick Start
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: What is unclear or missing?
+    validations:
+      required: true
+  - type: textarea
+    id: suggestion
+    attributes:
+      label: Suggested wording or structure

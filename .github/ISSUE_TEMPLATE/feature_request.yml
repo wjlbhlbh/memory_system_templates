@@ -1,0 +1,41 @@
+name: Feature request
+description: Suggest a new memory-system capability, workflow, example, or validation rule.
+title: "[Feature]: "
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What AI coding or memory handoff problem does this solve?
+      placeholder: Agents lose context when...
+    validations:
+      required: true
+  - type: textarea
+    id: audience
+    attributes:
+      label: Who needs this?
+      description: Name the user segment, project type, or AI coding tool.
+      placeholder: Claude Code users on monorepos, Cursor users, open-source maintainers...
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: Describe the smallest useful version.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Mention workarounds or related projects if any.
+  - type: checkboxes
+    id: constraints
+    attributes:
+      label: Constraints
+      options:
+        - label: This keeps Fast startup lightweight.
+        - label: This avoids tool-specific assumptions.
+        - label: This can be verified by a script or clear checklist.

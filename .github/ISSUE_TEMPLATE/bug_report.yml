@@ -1,0 +1,65 @@
+name: Bug report
+description: Report a problem with initialization, templates, adapters, encoding, or verification.
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for helping improve AI Memory System Templates.
+        Please do not paste secrets, private logs, production data, or full `.ai_memory` history files.
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - init-memory.ps1
+        - sync-tool-adapters.ps1
+        - search-memory.ps1
+        - .ai_memory-pro template
+        - tool adapter
+        - verification script
+        - documentation
+        - encoding or mojibake
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+      description: What should have happened?
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+      description: What happened instead?
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Reproduction steps
+      description: Include commands, paths, and minimal project shape if possible.
+      placeholder: |
+        1. Run ...
+        2. Open ...
+        3. See ...
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: OS, shell, PowerShell version, AI coding tool, and repository type.
+      placeholder: Windows 11, Windows PowerShell 5.1, Codex, full-stack repo
+    validations:
+      required: true
+  - type: textarea
+    id: verification
+    attributes:
+      label: Verification output
+      description: Paste relevant output from the verification script.
+      render: powershell
+      placeholder: powershell -ExecutionPolicy Bypass -File .\tests\verify-memory-system.ps1

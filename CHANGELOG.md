@@ -1,6 +1,8 @@
 # Changelog
 
 ## Unreleased
+- 增强开源呈现：README 首屏加入英文定位、徽章、Quick Start、关键词布局、差异化表格、社区入口和传播引导。
+- 增加 GitHub Issue Forms、PR 模板、Code of Conduct、Support、Roadmap 和开源发布计划，方便外部用户反馈、贡献和传播。
 - 新增 `MEMORY.md` 短启动导航、`memory_types` 记忆分类、`module-map.json` 模块记忆映射和 `modules/README.md` overlay 规则。
 - 新增 `history/index.jsonl` 可检索归档索引和 `search-memory.ps1`，归档历史先搜索再按需读取。
 - 增加任务包生命周期、`masterTaskLedger.md` backlink 规则，以及长期事实的 `status` / `last_verified` / `confidence` / `superseded_by` 字段。

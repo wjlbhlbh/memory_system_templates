@@ -1,5 +1,102 @@
 # AI Memory System Templates
 
+> AI agent memory system and Memory Bank templates for Codex, Claude Code, Cursor, Cline, OpenCode, Roo Code, Antigravity, AGENTS.md, context engineering, multi-agent handoff, and verified AI coding workflows.
+
+[![CI](https://github.com/wjlbhlbh/memory_system_templates/actions/workflows/ci.yml/badge.svg)](https://github.com/wjlbhlbh/memory_system_templates/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![AI Coding](https://img.shields.io/badge/AI%20Coding-Memory%20System-blue)](#why-this-project)
+[![Context Engineering](https://img.shields.io/badge/Context%20Engineering-Memory%20Bank-purple)](#search-keywords)
+
+**English:** A practical, tool-agnostic project memory system for AI coding agents. It gives every repository a lightweight `.ai_memory` layer with fast startup rules, active context, verified progress, module memory, searchable history, task packs, tool adapters, and health checks.
+
+**中文：** 这是一套面向 AI 编程 Agent 的项目记忆系统模板。它不是单个 prompt，而是一套可初始化、可验证、可跨工具接管的 `.ai_memory` 工程记忆层，适合长期项目、超大型项目、多 Agent 协作和上下文压缩后的恢复。
+
+## Why This Project
+
+AI coding assistants are powerful, but long-running projects still fail in familiar ways: context loss, repeated analysis, stale decisions, unreadable memory files, tool-specific instructions, and handoffs with no verification evidence.
+
+This project turns those failure modes into reusable project memory templates:
+
+- **Fast startup:** read `index.json` and only the files in `startup_order`.
+- **Memory Bank structure:** `projectbrief.md`, `activeContext.md`, `progress.md`, `decisionLog.md`, `interfaces.md`, `pitfalls.md`, and more.
+- **Context engineering:** active window, rolling progress window, archive index, and task-scoped reading boundaries.
+- **Multi-agent handoff:** `masterTaskLedger.md` and `task-packs/` for claimable, verifiable work units.
+- **Module memory:** `module-map.json` and `modules/` overlays for large monorepos and full-stack projects.
+- **Searchable history:** `history/index.jsonl` plus `search-memory.ps1`.
+- **Tool adapters:** starter rules for Codex, Claude Code, Cursor, Cline, OpenCode, Roo Code, Antigravity, and AGENTS.md-compatible tools.
+- **Verification:** PowerShell checks for UTF-8 readability, mojibake, startup index integrity, memory growth control, and sensitive-material leaks.
+
+## Search Keywords
+
+AI agent memory, AI coding memory system, Memory Bank, Claude Code memory bank, Codex AGENTS.md, Cursor rules, Cline Memory Bank, context engineering, prompt engineering, multi-agent handoff, project memory, persistent context, LLM coding workflow, verified AI coding, agentic coding, vibe coding, AI software development.
+
+## Quick Start
+
+Clone this repository, then run the initializer from the root of the project where you want AI memory:
+
+```powershell
+git clone https://github.com/wjlbhlbh/memory_system_templates.git
+cd path\to\your-project
+$repo = "C:\path\to\memory_system_templates"
+powershell -ExecutionPolicy Bypass -File "$repo\init-memory.ps1" -Mode Pro
+```
+
+If you are already inside this repository and want to test the initializer on another project:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\init-memory.ps1 -TargetPath C:\path\to\your-project -Mode Pro
+```
+
+The initializer creates:
+
+- `.ai_memory/` project memory files.
+- `AGENTS.md` for Codex, OpenCode, Antigravity, and AGENTS.md-compatible tools.
+- `CLAUDE.md` for Claude Code.
+- `search-memory.ps1` for searching archived project memory.
+- `.ai_memory/SETUP_TODO.md` with the few fields you should fill first.
+
+## Who Should Use This
+
+- Developers using Codex, Claude Code, Cursor, Cline, Roo Code, OpenCode, Antigravity, or multiple AI coding assistants.
+- Teams that lose time after context compression, model switching, or agent handoff.
+- Full-stack and monorepo projects where a single `activeContext.md` or `progress.md` becomes too large.
+- Open-source maintainers who want AI agents to read less, verify more, and avoid tool-specific assumptions.
+
+## Why It Is Different
+
+| Common approach | This project |
+|---|---|
+| A single prompt or rules file | A complete `.ai_memory` project memory layer |
+| Read everything at startup | Fast startup with `startup_order` and task-scoped loading |
+| One growing progress file | Active window, rolling window, archive index, and searchable history |
+| Tool-specific instructions | Tool-agnostic rules plus adapters for popular AI coding tools |
+| Unverified handoff notes | Checkpoints, Requirement Checklist, and verification evidence |
+| Large project memory bloat | Module overlays and task packs for bounded context |
+
+## Repository Topics
+
+Recommended GitHub topics for discoverability:
+
+`ai-agent`, `ai-coding`, `memory-bank`, `context-engineering`, `agents-md`, `codex`, `claude-code`, `cursor`, `cline`, `prompt-engineering`, `developer-tools`, `llm`
+
+## Community
+
+- Roadmap: [ROADMAP.md](ROADMAP.md)
+- Contributing: [CONTRIBUTING.md](CONTRIBUTING.md)
+- Support: [SUPPORT.md](SUPPORT.md)
+- Security: [SECURITY.md](SECURITY.md)
+- Open-source launch plan: [docs/marketing/OPEN_SOURCE_LAUNCH_PLAN.md](docs/marketing/OPEN_SOURCE_LAUNCH_PLAN.md)
+
+## Help This Project Grow
+
+If this project helps your AI coding workflow:
+
+- Star the repository so more developers can discover it.
+- Share a real use case in Discussions.
+- Open an adapter request for your favorite AI coding tool.
+- Contribute examples for Codex, Claude Code, Cursor, Cline, Roo Code, OpenCode, Antigravity, or AGENTS.md workflows.
+- Link back to this repository when writing about AI agent memory, Memory Bank, context engineering, or persistent context for AI software development.
+
 这套模板用于给新项目初始化 `.ai_memory`，目标不是只提供目录结构，而是提供一套可直接复用的规则内容设计。
 
 ## 它解决什么问题

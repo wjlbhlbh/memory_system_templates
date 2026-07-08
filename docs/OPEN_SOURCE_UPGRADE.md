@@ -22,6 +22,9 @@
 - 增加 Fast startup：启动时只读取 `startup_order`，其他记忆文件按任务相关性加载，避免全量上下文拖慢开发。
 - 增加基础开源文件：`LICENSE`、`CONTRIBUTING.md`、`SECURITY.md`、`CHANGELOG.md`。
 - 增加 GitHub Actions CI，自动验证模板完整性与编码规范。
+- 增加 GitHub Issue Forms、PR 模板、`CODE_OF_CONDUCT.md`、`SUPPORT.md` 和 `ROADMAP.md`。
+- 增加 README 首屏关键词布局、徽章、Quick Start、差异化表格、社区入口和传播引导。
+- 增加 `docs/marketing/OPEN_SOURCE_LAUNCH_PLAN.md`，记录仓库描述、Topics、关键词、发布文案和推广路径。
 
 ## 下一阶段建议
 1. 增加真实示例项目
@@ -54,6 +57,12 @@
 7. 建立贡献路线
    - 标记适合新手的 issue：新增适配器、补示例、改文档、补跨平台测试。
    - 用 GitHub Discussions 收集不同 AI 工具的适配经验。
+
+## GitHub 可发现性设计
+- 仓库描述应覆盖 `AI agent memory system`、`Memory Bank templates`、`Codex`、`Claude Code`、`Cursor`、`Cline`、`AGENTS.md`、`context engineering`。
+- Topics 应覆盖：`ai-agent`、`ai-coding`、`memory-bank`、`context-engineering`、`agents-md`、`codex`、`claude-code`、`cursor`、`cline`、`prompt-engineering`、`developer-tools`、`llm`。
+- README 前 100 行保留英文关键词和中文说明，兼顾 GitHub/Google 搜索与中文开发者转化。
+- Issue Forms 将反馈拆成 bug、feature、adapter、docs，降低维护者分拣成本。
 
 ## 开源推广建议
 - 第一波内容：写一篇中文文章，标题聚焦痛点，例如“我给 AI 编程做了一套不会断片的项目记忆系统”。
