@@ -1,6 +1,11 @@
 # Changelog
 
 ## Unreleased
+- Added a three-file startup capsule with hard character, line, and single-line budgets.
+- Added first-requirement business initialization and Latest User Intent Wins lifecycle rules.
+- Added `requirements/current.md` and append-only `requirements/change-log.jsonl`.
+- Added deterministic requirement replacement, memory health, safe compaction, SHA-256 archive verification, and legacy migration tools.
+- Extended history search with task, type, date, limit, and hash verification filters.
 - 增强开源呈现：README 首屏加入英文定位、徽章、Quick Start、关键词布局、差异化表格、社区入口和传播引导。
 - 增加 GitHub Issue Forms、PR 模板、Code of Conduct、Support、Roadmap 和开源发布计划，方便外部用户反馈、贡献和传播。
 - 新增 `MEMORY.md` 短启动导航、`memory_types` 记忆分类、`module-map.json` 模块记忆映射和 `modules/README.md` overlay 规则。

@@ -4,6 +4,9 @@ This roadmap focuses on making AI Memory System Templates easier to discover, ea
 
 ## Now
 
+- Keep the three-file startup and memory budgets regression-tested.
+- Collect feedback on requirement baseline initialization, direct requirement replacement, compaction, and migration workflows.
+
 - Keep the Pro template stable and lightweight.
 - Improve README discoverability for AI agent memory, Memory Bank, context engineering, Codex, Claude Code, Cursor, Cline, and AGENTS.md searches.
 - Collect real user feedback through structured issues and discussions.

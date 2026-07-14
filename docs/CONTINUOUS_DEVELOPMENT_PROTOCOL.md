@@ -152,3 +152,12 @@
 - `tests/verify-memory-system.ps1`
 
 也就是说，后续不是“靠操作者记得遵守”，而是“启动期模板和验证脚本共同约束”。
+## 11. First real requirement completes business initialization
+
+Creating `.ai_memory` is not enough. When a new project first receives a user requirement, PRD, requirement list, or prototype description, the main agent must initialize `requirements/current.md`, append the source event, update `projectbrief.md` and `activeContext.md`, and run `memory-health.ps1` before implementation. Large source documents stay outside the startup capsule and are referenced by path, summary, and SHA-256.
+
+## 12. Latest user intent updates memory immediately
+
+A new explicit user requirement directly replaces the prior active requirement. The old version is retained as `SUPERSEDED`; no second confirmation gate is required. The main agent calculates the affected memory routes and updates only those files. A synchronized requirement defaults to `implementation_pending` and `not_verified`, so a documentation update can never masquerade as completed code.
+
+Use `record-requirement-change.ps1` for deterministic versioning and `requirements/change-log.jsonl` for audit. Questions, hypotheticals, examples, quotations, and AI proposals are not requirement events unless the user explicitly adopts them.

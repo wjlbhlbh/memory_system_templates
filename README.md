@@ -56,6 +56,31 @@ The initializer creates:
 - `search-memory.ps1` for searching archived project memory.
 - `.ai_memory/SETUP_TODO.md` with the few fields you should fill first.
 
+## Requirement-Driven Memory Lifecycle
+
+Installing `.ai_memory` creates the technical container; the first real user requirement or PRD completes business initialization. Agents must build `requirements/current.md`, append source-aware events to `requirements/change-log.jsonl`, and update only the affected project memory before implementation.
+
+The default conflict policy is **Latest User Intent Wins**:
+
+- A new explicit user requirement directly replaces the prior active version.
+- The prior version remains auditable as `SUPERSEDED`.
+- Questions, hypotheticals, examples, quoted opinions, and unaccepted AI suggestions do not replace requirements.
+- Requirement synchronization never claims that code is implemented or verified.
+
+Runtime helpers generated into the target project:
+
+```powershell
+.\memory-health.ps1 -MemoryPath .ai_memory
+.\record-requirement-change.ps1 -RequirementId REQ-001 -Title "Rule" -Statement "Current user requirement"
+.\compact-memory.ps1 -MemoryPath .ai_memory -ActiveContextReplacementPath .\active.compact.md
+.\compact-memory.ps1 -MemoryPath .ai_memory -ActiveContextReplacementPath .\active.compact.md -Apply
+.\migrate-memory.ps1 -TargetPath .
+.\migrate-memory.ps1 -TargetPath . -Apply
+.\search-memory.ps1 -MemoryPath .ai_memory -Type memory-compaction -Since 2026-01-01 -Limit 10 -VerifyHash
+```
+
+`compact-memory.ps1` and `migrate-memory.ps1` default to DryRun. Apply mode creates an exact SHA-256 manifest before replacing or upgrading active memory.
+
 ## Who Should Use This
 
 - Developers using Codex, Claude Code, Cursor, Cline, Roo Code, OpenCode, Antigravity, or multiple AI coding assistants.

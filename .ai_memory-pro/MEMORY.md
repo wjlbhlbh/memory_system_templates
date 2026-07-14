@@ -26,6 +26,13 @@
 - **semantic**: durable project facts and contracts. Use `architecture.md`, `interfaces.md`, `systemPatterns.md`, `techContext.md`, `decisionLog.md`, and `pitfalls.md`.
 - **episodic**: task history and verified events. Use `activeContext.md`, `progress.md`, `masterTaskLedger.md`, `task-packs/`, and `history/`.
 
+
+## Requirement lifecycle
+- `requirements/current.md` is the current effective requirement baseline.
+- `requirements/change-log.jsonl` is the append-only audit trail.
+- If the baseline is `[UNINITIALIZED]`, the first real requirement or PRD triggers business memory initialization.
+- Latest User Intent Wins; prior versions become `SUPERSEDED`, while implementation and verification remain separate states.
+
 ## Module memory
 - Read `module-map.json` to map touched paths to module overlays.
 - Read `modules/README.md` before creating a module overlay.
