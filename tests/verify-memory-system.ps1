@@ -597,6 +597,37 @@ try {
     $activeAfterRequirement = Get-Content -Raw -Encoding UTF8 (Join-Path $generatedMemory "activeContext.md")
     Assert-True ($activeAfterRequirement -match "Requirement Baseline.*2") "activeContext.md must expose the latest requirement baseline version."
 
+    Write-Output "Checking safe memory compaction..."
+    $generatedCompactTool = Join-Path $tempRoot "compact-memory.ps1"
+    Assert-True (Test-Path $generatedCompactTool) "init-memory.ps1 must generate compact-memory.ps1."
+    $replacementPath = Join-Path $tempRoot "activeContext.replacement.md"
+    [IO.File]::WriteAllText($replacementPath, ($activeAfterRequirement.TrimEnd() + "`n- **Compaction Test Marker**: applied`n"), [Text.UTF8Encoding]::new($false))
+    $beforeCompactionHash = (Get-FileHash -LiteralPath (Join-Path $generatedMemory "activeContext.md") -Algorithm SHA256).Hash.ToLowerInvariant()
+    $archiveRoot = Join-Path $tempRoot ".ai_memory_archive"
+    $dryRunOutput = @(& powershell -NoProfile -ExecutionPolicy Bypass -File $generatedCompactTool -MemoryPath $generatedMemory -ActiveContextReplacementPath $replacementPath 2>&1)
+    Assert-True ($LASTEXITCODE -eq 0) "Compaction DryRun must succeed."
+    Assert-True (($dryRunOutput -join "`n") -match "DRY RUN") "Compaction must default to DryRun."
+    Assert-True (-not (Test-Path $archiveRoot)) "DryRun must not create an archive."
+
+    $applyOutput = @(& powershell -NoProfile -ExecutionPolicy Bypass -File $generatedCompactTool -MemoryPath $generatedMemory -ActiveContextReplacementPath $replacementPath -Apply 2>&1)
+    Assert-True ($LASTEXITCODE -eq 0) "Compaction Apply must succeed. Output: $($applyOutput -join ' ')"
+    Assert-True ((Get-Content -Raw -Encoding UTF8 (Join-Path $generatedMemory "activeContext.md")) -match "Compaction Test Marker") "Compaction must apply the replacement file."
+    $manifestFile = Get-ChildItem -LiteralPath $archiveRoot -Recurse -File -Filter "manifest.json" | Select-Object -First 1
+    Assert-True ($null -ne $manifestFile) "Compaction must create an archive manifest."
+    $manifest = Get-Content -Raw -Encoding UTF8 $manifestFile.FullName | ConvertFrom-Json
+    $activeArchiveRecord = @($manifest.files | Where-Object { $_.source_path -eq ".ai_memory/activeContext.md" }) | Select-Object -First 1
+    Assert-True ($null -ne $activeArchiveRecord) "Manifest must record the original activeContext.md."
+    $archivedActivePath = Join-Path $tempRoot $activeArchiveRecord.archive_path
+    Assert-True ((Get-FileHash -LiteralPath $archivedActivePath -Algorithm SHA256).Hash.ToLowerInvariant() -eq $beforeCompactionHash) "Archived activeContext.md must preserve the original SHA-256."
+    Assert-True ((Get-Item -LiteralPath $archivedActivePath).IsReadOnly) "Archived memory files must be read-only."
+    $verifiedArchiveOutput = @(& powershell -NoProfile -ExecutionPolicy Bypass -File $generatedHealthTool -MemoryPath $generatedMemory -VerifyArchive 2>&1)
+    Assert-True ($LASTEXITCODE -eq 0) "Untampered archive must pass hash verification."
+    (Get-Item -LiteralPath $archivedActivePath).IsReadOnly = $false
+    [IO.File]::AppendAllText($archivedActivePath, "tamper", [Text.UTF8Encoding]::new($false))
+    $tamperedArchiveOutput = @(& powershell -NoProfile -ExecutionPolicy Bypass -File $generatedHealthTool -MemoryPath $generatedMemory -VerifyArchive 2>&1)
+    Assert-True ($LASTEXITCODE -ne 0) "Tampered archive must fail hash verification."
+    Assert-True (($tamperedArchiveOutput -join "`n") -match "Archive SHA-256 mismatch") "Archive failure must identify the hash mismatch."
+
     $setupTodo = Get-Content -Raw -Encoding UTF8 (Join-Path $tempRoot ".ai_memory\SETUP_TODO.md")
     Assert-True ($setupTodo -match "tool_adapters/") "SETUP_TODO.md must render tool_adapters/ literally."
     Assert-True ($setupTodo -notmatch ([char]9 + "ool_adapters/")) "SETUP_TODO.md must not contain a tab caused by PowerShell backtick escaping."

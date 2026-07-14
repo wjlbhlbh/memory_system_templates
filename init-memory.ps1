@@ -290,6 +290,7 @@ function Copy-MemoryHelperScript {
 Copy-MemoryHelperScript -SourceFileName "search-memory.ps1" -DestinationFileName "search-memory.ps1"
 Copy-MemoryHelperScript -SourceFileName "memory-health.ps1" -DestinationFileName "memory-health.ps1"
 Copy-MemoryHelperScript -SourceFileName "record-requirement-change.ps1" -DestinationFileName "record-requirement-change.ps1"
+Copy-MemoryHelperScript -SourceFileName "compact-memory.ps1" -DestinationFileName "compact-memory.ps1"
 
 function Copy-AdapterTemplate {
     param(
