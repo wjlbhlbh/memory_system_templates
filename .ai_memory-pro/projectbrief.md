@@ -46,4 +46,3 @@
 - A new explicit user requirement overrides the previous active version under Latest User Intent Wins.
 - PRD and source documents provide evidence; large source content stays outside the startup capsule and is referenced by path, summary, and SHA-256.
 - Requirement synchronization does not claim that implementation or verification is complete.
-

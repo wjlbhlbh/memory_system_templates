@@ -22,4 +22,3 @@ Mandatory Fast startup sequence:
 - Apply **Latest User Intent Wins**: a new explicit user requirement directly replaces the prior active version; record the old version as `SUPERSEDED`.
 - Questions, hypotheticals, examples, quoted opinions, and unaccepted AI suggestions do not replace requirements.
 - Update only affected memory files. Requirement synchronization does not mean implementation or verification is complete.
-

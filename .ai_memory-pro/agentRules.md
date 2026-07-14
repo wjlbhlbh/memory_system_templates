@@ -70,4 +70,3 @@
 - Questions, hypotheticals, examples, quoted opinions, and unaccepted AI suggestions do not replace requirements.
 - Update only affected memory: project scope -> `projectbrief.md`; current execution -> `activeContext.md`; contracts or permissions -> `interfaces.md`; architecture -> `architecture.md`; long-term trade-offs -> `decisionLog.md`; cancellation or delay -> `backlog.md` and the task ledger.
 - Requirement synchronization does not mean implementation or verification is complete. New or changed requirements default to `implementation_pending` and `not_verified`.
-
