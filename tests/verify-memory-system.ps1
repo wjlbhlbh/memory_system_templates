@@ -572,6 +572,15 @@ try {
     Assert-True (($healthOutput -join "`n") -match "Startup files: 3 / limit 3") "Health output must report startup file budget."
     Assert-True (($healthOutput -join "`n") -match "Overall status: PASS") "Health output must report PASS."
 
+    $mismatchRoot = Join-Path $tempRoot "baseline-mismatch"
+    Copy-Item -LiteralPath $generatedMemory -Destination $mismatchRoot -Recurse
+    $mismatchRequirementsPath = Join-Path $mismatchRoot "requirements\current.md"
+    $mismatchRequirements = [IO.File]::ReadAllText($mismatchRequirementsPath, [Text.Encoding]::UTF8).Replace("- **baseline_version**: 0", "- **baseline_version**: 9")
+    [IO.File]::WriteAllText($mismatchRequirementsPath, $mismatchRequirements, [Text.UTF8Encoding]::new($false))
+    $mismatchOutput = @(& powershell -NoProfile -ExecutionPolicy Bypass -File $generatedHealthTool -MemoryPath $mismatchRoot 2>&1)
+    Assert-True ($LASTEXITCODE -ne 0) "A stale requirement baseline version must fail memory health."
+    Assert-True (($mismatchOutput -join "`n") -match "Requirement baseline version does not match change log") "Baseline mismatch must report the requirement synchronization error."
+
     $inflatedRoot = Join-Path $tempRoot "inflated-memory"
     Copy-Item -LiteralPath $generatedMemory -Destination $inflatedRoot -Recurse
     [IO.File]::AppendAllText((Join-Path $inflatedRoot "activeContext.md"), ("X" * 200000), [Text.UTF8Encoding]::new($false))

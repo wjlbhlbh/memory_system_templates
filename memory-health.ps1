@@ -109,6 +109,29 @@ if (Test-Path -LiteralPath $requirementsPath) {
     Add-HealthError "Missing requirements/current.md."
 }
 
+$changeLogPath = Join-Path $resolvedMemory "requirements\change-log.jsonl"
+if ((Test-Path -LiteralPath $changeLogPath) -and $requirementVersion -ge 0) {
+    $requirementEvents = @()
+    foreach ($line in Get-Content -Encoding UTF8 $changeLogPath) {
+        if (-not $line.Trim()) { continue }
+        try {
+            $record = $line | ConvertFrom-Json
+            if ($record.status -ne "schema") { $requirementEvents += $record }
+        } catch { }
+    }
+    if ($requirementVersion -ne $requirementEvents.Count) {
+        Add-HealthError "Requirement baseline version does not match change log event count: $requirementVersion / $($requirementEvents.Count)"
+    }
+}
+
+if ((Test-Path -LiteralPath $activePath) -and $requirementVersion -ge 0) {
+    $activeText = Get-Content -Raw -Encoding UTF8 $activePath
+    $activeBaselineMatch = [regex]::Match($activeText, '(?m)^- \*\*Requirement Baseline\*\*: (\d+)')
+    if (-not $activeBaselineMatch.Success -or [int]$activeBaselineMatch.Groups[1].Value -ne $requirementVersion) {
+        Add-HealthError "activeContext requirement baseline does not match requirements/current.md."
+    }
+}
+
 foreach ($jsonlRelative in @("requirements\change-log.jsonl", "history\index.jsonl")) {
     $jsonlPath = Join-Path $resolvedMemory $jsonlRelative
     if (-not (Test-Path -LiteralPath $jsonlPath)) {
