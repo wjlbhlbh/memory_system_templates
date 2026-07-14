@@ -259,6 +259,32 @@ function Assert-TrustAndFreshness {
     }
 }
 
+function Assert-RequirementLifecycle {
+    param([string]$MemoryPath)
+
+    $currentPath = Join-Path $MemoryPath "requirements\current.md"
+    $changeLogPath = Join-Path $MemoryPath "requirements\change-log.jsonl"
+    Assert-True (Test-Path $currentPath) "Missing requirements/current.md in $MemoryPath"
+    Assert-True (Test-Path $changeLogPath) "Missing requirements/change-log.jsonl in $MemoryPath"
+
+    $current = Get-Content -Raw -Encoding UTF8 $currentPath
+    Assert-True ($current -match "baseline_version") "requirements/current.md must expose baseline_version."
+    Assert-True ($current -match "\[UNINITIALIZED\]") "New requirement baselines must start as [UNINITIALIZED]."
+    Assert-True ($current -match "REQ-001") "requirements/current.md must define stable Requirement ID formatting."
+    Assert-True ($current -match "implementation_status") "requirements/current.md must separate implementation status."
+    Assert-True ($current -match "verification_status") "requirements/current.md must separate verification status."
+    Assert-True ($current -match "SUPERSEDED") "requirements/current.md must keep a superseded requirement index."
+
+    $records = @(Get-Content -Encoding UTF8 $changeLogPath | Where-Object { $_.Trim() })
+    Assert-True ($records.Count -ge 1) "requirements/change-log.jsonl must contain a schema seed."
+    foreach ($line in $records) {
+        $record = $line | ConvertFrom-Json
+        foreach ($field in @("event_id", "requirement_id", "version", "timestamp", "source_type", "source_ref", "raw_summary", "change_type", "status", "affected_memory", "implementation_status", "verification_status")) {
+            Assert-True ($record.PSObject.Properties.Name -contains $field) "Requirement change records must include $field."
+        }
+    }
+}
+
 function Assert-IndexIsComplete {
     param([string]$MemoryPath)
 
@@ -349,6 +375,7 @@ function Assert-ProjectFastStartupRules {
 
     $memoryPath = Join-Path $Root ".ai_memory"
     Assert-IndexIsComplete $memoryPath
+    Assert-RequirementLifecycle $memoryPath
 
     $activeContextPath = Join-Path $memoryPath "activeContext.md"
     $agentRulesPath = Join-Path $memoryPath "agentRules.md"
@@ -440,6 +467,7 @@ function Assert-FastStartupRules {
     Assert-True ($progressRules -match 'checkpoint') "progress.md must require checkpoint-based writes."
     Assert-PrimaryMemoryWindowRules -ActiveContext $activeContext -Progress $progressRules -Name ".ai_memory-pro"
 
+    Assert-RequirementLifecycle (Join-Path $Root ".ai_memory-pro")
     Assert-GrowthControlFiles (Join-Path $Root ".ai_memory-pro")
     Assert-MemoryHub (Join-Path $Root ".ai_memory-pro")
     Assert-ModuleMemory (Join-Path $Root ".ai_memory-pro")

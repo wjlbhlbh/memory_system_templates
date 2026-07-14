@@ -1,0 +1,1 @@
+{"event_id":"schema","requirement_id":"REQ-000","version":0,"timestamp":"__DATE__","source_type":"schema","source_ref":"requirements/current.md","raw_summary":"Schema seed for append-only requirement changes.","change_type":"added","previous_version":null,"status":"schema","affected_memory":[],"implementation_status":"not_applicable","verification_status":"not_applicable"}
