@@ -609,6 +609,14 @@ try {
     Assert-True (($reqEvents | Sort-Object version | Select-Object -Last 1).previous_version -eq 1) "The replacement event must link to the superseded version."
     Assert-True (($reqEvents | Sort-Object version | Select-Object -Last 1).status -eq "active") "The newest requirement event must be active."
 
+    $removalMemory = Join-Path $tempRoot "requirement-removal"
+    Copy-Item -LiteralPath $generatedMemory -Destination $removalMemory -Recurse
+    & $requirementTool -MemoryPath $removalMemory -RequirementId "REQ-001" -Title $requirementTitle -Statement "removed" -ChangeType "removed" -SourceType "user" -SourceRef "turn-3" | Out-Null
+    & $requirementTool -MemoryPath $removalMemory -RequirementId "REQ-001" -Title $requirementTitle -Statement $requirementV1 -ChangeType "added" -SourceType "user" -SourceRef "turn-4" | Out-Null
+    $removalEvents = @(Get-Content -Encoding UTF8 (Join-Path $removalMemory "requirements\change-log.jsonl") | Where-Object { $_.Trim() } | ForEach-Object { $_ | ConvertFrom-Json } | Where-Object { $_.requirement_id -eq "REQ-001" } | Sort-Object version)
+    Assert-True (($removalEvents.version -join ",") -eq "1,2,3,4") "Requirement versions must stay monotonic across removal and reactivation."
+    Assert-True ((Get-Content -Raw -Encoding UTF8 (Join-Path $removalMemory "requirements\current.md")).Contains($requirementV1)) "A reactivated latest requirement must return to the active baseline."
+
     $activeAfterRequirement = Get-Content -Raw -Encoding UTF8 (Join-Path $generatedMemory "activeContext.md")
     Assert-True ($activeAfterRequirement -match "Requirement Baseline.*2") "activeContext.md must expose the latest requirement baseline version."
 
