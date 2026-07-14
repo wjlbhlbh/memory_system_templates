@@ -19,8 +19,18 @@ function Assert-True {
 
 function Get-RelativePath {
     param([string]$Path)
-    return $Path.Substring($Root.Length + 1)
+
+    $rootPrefix = $Root.TrimEnd('\', '/') + [IO.Path]::DirectorySeparatorChar
+    if ($Path.StartsWith($rootPrefix, [StringComparison]::OrdinalIgnoreCase)) {
+        return $Path.Substring($rootPrefix.Length)
+    }
+
+    return $Path
 }
+
+$externalDisplayPath = Join-Path ([IO.Path]::GetTempPath()) "memory-system-external-display-test.md"
+$externalDisplayResult = Get-RelativePath $externalDisplayPath
+Assert-True ($externalDisplayResult -eq $externalDisplayPath) "Get-RelativePath must preserve paths outside the verification root."
 
 function Assert-Utf8NoBom {
     param([System.IO.FileInfo]$File)
