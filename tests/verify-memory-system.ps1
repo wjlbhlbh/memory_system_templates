@@ -557,10 +557,25 @@ try {
     Get-Content -Raw -Encoding UTF8 (Join-Path $tempRoot ".ai_memory\index.json") | ConvertFrom-Json | Out-Null
     Assert-ProjectFastStartupRules $tempRoot
 
+    Write-Output "Checking generated memory health tool..."
+    $generatedMemory = Join-Path $tempRoot ".ai_memory"
+    $generatedHealthTool = Join-Path $tempRoot "memory-health.ps1"
+    Assert-True (Test-Path $generatedHealthTool) "init-memory.ps1 must generate memory-health.ps1."
+    $healthOutput = @(& powershell -NoProfile -ExecutionPolicy Bypass -File $generatedHealthTool -MemoryPath $generatedMemory 2>&1)
+    Assert-True ($LASTEXITCODE -eq 0) "Healthy generated memory must pass memory-health.ps1. Output: $($healthOutput -join ' ')"
+    Assert-True (($healthOutput -join "`n") -match "Startup files: 3 / limit 3") "Health output must report startup file budget."
+    Assert-True (($healthOutput -join "`n") -match "Overall status: PASS") "Health output must report PASS."
+
+    $inflatedRoot = Join-Path $tempRoot "inflated-memory"
+    Copy-Item -LiteralPath $generatedMemory -Destination $inflatedRoot -Recurse
+    [IO.File]::AppendAllText((Join-Path $inflatedRoot "activeContext.md"), ("X" * 200000), [Text.UTF8Encoding]::new($false))
+    $inflatedOutput = @(& powershell -NoProfile -ExecutionPolicy Bypass -File $generatedHealthTool -MemoryPath $inflatedRoot 2>&1)
+    Assert-True ($LASTEXITCODE -ne 0) "A 205KB activeContext.md must fail memory-health.ps1."
+    Assert-True (($inflatedOutput -join "`n") -match "activeContext hard character budget exceeded|activeContext single-line budget exceeded") "Inflated memory failure must identify the violated budget."
+
     Write-Output "Checking latest-user-wins requirement updates..."
     $requirementTool = Join-Path $Root "record-requirement-change.ps1"
     Assert-True (Test-Path $requirementTool) "Missing record-requirement-change.ps1."
-    $generatedMemory = Join-Path $tempRoot ".ai_memory"
     $requirementTitle = [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String("5Yig6Zmk5p2D6ZmQ"))
     $requirementV1 = [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String("5pmu6YCa55So5oi35Y+v55u05o6l5Yig6Zmk"))
     $requirementV2 = [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String("5pmu6YCa55So5oi35o+Q5Lqk55Sz6K+377yM55Sx566h55CG5ZGY5a6h5qC4"))
