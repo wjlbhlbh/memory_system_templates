@@ -17,3 +17,9 @@ Mandatory Fast startup sequence:
 12. For long-running work, multi-agent work, or before context compression / model switching, update `activeContext.md` with the latest checkpoint and resume reads. Keep `activeContext.md` as the active window and `progress.md` as a rolling window.
 13. Require execution evidence and a Requirement Checklist before `[DONE]`.
 14. After context compression, model switching, or tool switching, rerun Fast startup and resume from `activeContext.md` instead of replaying the whole chat from memory.
+## Requirement Lifecycle
+- If `.ai_memory/requirements/current.md` is `[UNINITIALIZED]` and the user provides requirements or a PRD, initialize the baseline before implementation.
+- Apply **Latest User Intent Wins**: a new explicit user requirement directly replaces the prior active version; record the old version as `SUPERSEDED`.
+- Questions, hypotheticals, examples, quoted opinions, and unaccepted AI suggestions do not replace requirements.
+- Update only affected memory files. Requirement synchronization does not mean implementation or verification is complete.
+

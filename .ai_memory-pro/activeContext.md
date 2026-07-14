@@ -1,5 +1,8 @@
 # 当前活跃上下文 (Active Context)
 
+<!-- REQUIREMENT_BASELINE -->
+- **Requirement Baseline**: 0 ([UNINITIALIZED])
+
 ## 0. 何时必须更新本文件
 - 本文件由主 Agent (main agent) 单独维护；子 Agent 只回传信息，不直接编辑本文件
 - 本文件是 bounded active window / 活跃窗口，不是全量历史库；只保留当前可接手所需的最小状态

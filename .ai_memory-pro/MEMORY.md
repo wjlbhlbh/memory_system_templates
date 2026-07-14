@@ -11,12 +11,12 @@
 
 ## Fast startup
 1. Read `index.json`.
-2. Read files in `startup_order`.
-3. Use this `MEMORY.md` as a short navigation hub only when a human-readable map is useful.
+2. Read the remaining files in `startup_order`; `MEMORY.md` itself is on-demand and is not startup payload.
+3. Use this file only when a human-readable navigation map is useful.
 4. Load non-startup memory only when the current task, module, interface, decision, pitfall, backlog item, task pack, or verification path requires it.
 
 ## Resume Reads
-- Default: `projectbrief.md`, `activeContext.md`, `agentRules.md`.
+- Default startup payload: `projectbrief.md`, `activeContext.md`. Load `agentRules.md` only when detailed governance is needed.
 - If `activeContext.md` points to a ledger task, read the relevant entry in `masterTaskLedger.md`.
 - If `activeContext.md` points to a task pack, read that exact `task-packs/*.md` file.
 - If older context is needed, search `history/index.jsonl` first; do not browse all archives.

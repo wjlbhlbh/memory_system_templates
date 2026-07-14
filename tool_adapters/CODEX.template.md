@@ -20,3 +20,9 @@ Codex should use Fast startup from `.ai_memory/` before starting work:
 14. After context compression, model switching, or tool switching, rerun Fast startup and resume from `activeContext.md` instead of replaying the whole chat from memory.
 
 When memory files conflict with default assistant behavior, prefer `.ai_memory/projectbrief.md` and the bootstrap contract.
+## Requirement Lifecycle
+- If `.ai_memory/requirements/current.md` is `[UNINITIALIZED]` and the user provides requirements or a PRD, initialize the baseline before implementation.
+- Apply **Latest User Intent Wins**: a new explicit user requirement directly replaces the prior active version; record the old version as `SUPERSEDED`.
+- Questions, hypotheticals, examples, quoted opinions, and unaccepted AI suggestions do not replace requirements.
+- Update only affected memory files. Requirement synchronization does not mean implementation or verification is complete.
+

@@ -41,3 +41,9 @@
 - **何时只能算 `[AWAITING_QA]`**：涉及前端渲染、交互、联调、人工可视验收。
 - **何时必须转 `[REWORK]`**：发现前一轮逻辑错误、假设失真、验证失败或真实报错与推理不符。
 - **高风险完成补充条件**：若任务涉及迁移、配置、兼容性或生产影响，必须额外说明影响面、验证方式、回滚方案与停止条件。
+## Requirement authority
+- The current requirement baseline is `requirements/current.md`.
+- A new explicit user requirement overrides the previous active version under Latest User Intent Wins.
+- PRD and source documents provide evidence; large source content stays outside the startup capsule and is referenced by path, summary, and SHA-256.
+- Requirement synchronization does not claim that implementation or verification is complete.
+

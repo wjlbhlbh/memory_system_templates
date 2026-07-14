@@ -18,3 +18,9 @@
 14. 如果发生 context compression、模型切换或工具切换，先重跑 Fast startup，再从 `activeContext.md` 的最近 checkpoint 继续，而不是靠聊天记忆重建上下文
 
 如有冲突，以 `.ai_memory/projectbrief.md` 为准。
+## Requirement Lifecycle
+- If `.ai_memory/requirements/current.md` is `[UNINITIALIZED]` and the user provides requirements or a PRD, initialize the baseline before implementation.
+- Apply **Latest User Intent Wins**: a new explicit user requirement directly replaces the prior active version; record the old version as `SUPERSEDED`.
+- Questions, hypotheticals, examples, quoted opinions, and unaccepted AI suggestions do not replace requirements.
+- Update only affected memory files. Requirement synchronization does not mean implementation or verification is complete.
+

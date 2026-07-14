@@ -390,6 +390,7 @@ function Assert-ProjectFastStartupRules {
     Assert-True ($activeContext -match 'Raw Wording|raw wording') "activeContext.md must include a raw user wording field."
     Assert-True ($activeContext -match 'Real Intent|real intent') "activeContext.md must include a real intent field."
     Assert-True ($activeContext -match 'Resume Reads|resume reads') "activeContext.md must include resume reads."
+    Assert-True ($activeContext -match 'Requirement Baseline') "activeContext.md must expose the current requirement baseline version."
     Assert-True ($activeContext -match 'main agent') "activeContext.md must define main-agent ownership."
 
     $agentRules = Get-Content -Raw -Encoding UTF8 $agentRulesPath
@@ -407,6 +408,11 @@ function Assert-ProjectFastStartupRules {
     Assert-True ($agentRules -match 'masterTaskLedger\.md') "agentRules.md must mention the master task ledger."
     Assert-True ($agentRules -match 'task-packs') "agentRules.md must mention task packs."
     Assert-True ($agentRules -match 'Requirement Checklist') "agentRules.md must require requirements coverage before completion."
+    Assert-True ($agentRules -match 'requirements/current\.md') "agentRules.md must trigger requirement baseline loading."
+    Assert-True ($agentRules -match 'UNINITIALIZED') "agentRules.md must define first requirement initialization."
+    Assert-True ($agentRules -match 'Latest User Intent Wins') "agentRules.md must apply the latest explicit user requirement directly."
+    Assert-True ($agentRules -match 'SUPERSEDED') "agentRules.md must preserve replaced requirement versions."
+    Assert-True ($agentRules -match 'does not mean implementation') "agentRules.md must separate requirement synchronization from implementation completion."
 
     Assert-GrowthControlFiles $memoryPath
     Assert-MemoryHub $memoryPath
@@ -444,6 +450,7 @@ function Assert-FastStartupRules {
     Assert-True ($activeContext -match 'Raw Wording|raw wording') "activeContext.md must include a raw user wording field."
     Assert-True ($activeContext -match 'Real Intent|real intent') "activeContext.md must include a real intent field."
     Assert-True ($activeContext -match 'Resume Reads|resume reads') "activeContext.md must include resume reads."
+    Assert-True ($activeContext -match 'Requirement Baseline') "activeContext.md must expose the current requirement baseline version."
     Assert-True ($activeContext -match 'main agent') "activeContext.md must define main-agent ownership."
 
     $agentRules = Get-Content -Raw -Encoding UTF8 (Join-Path $Root ".ai_memory-pro\agentRules.md")
@@ -461,6 +468,11 @@ function Assert-FastStartupRules {
     Assert-True ($agentRules -match 'masterTaskLedger\.md') "agentRules.md must mention the master task ledger."
     Assert-True ($agentRules -match 'task-packs') "agentRules.md must mention task packs."
     Assert-True ($agentRules -match 'Requirement Checklist') "agentRules.md must require requirements coverage before completion."
+    Assert-True ($agentRules -match 'requirements/current\.md') "agentRules.md must trigger requirement baseline loading."
+    Assert-True ($agentRules -match 'UNINITIALIZED') "agentRules.md must define first requirement initialization."
+    Assert-True ($agentRules -match 'Latest User Intent Wins') "agentRules.md must apply the latest explicit user requirement directly."
+    Assert-True ($agentRules -match 'SUPERSEDED') "agentRules.md must preserve replaced requirement versions."
+    Assert-True ($agentRules -match 'does not mean implementation') "agentRules.md must separate requirement synchronization from implementation completion."
 
     $progressRules = Get-Content -Raw -Encoding UTF8 (Join-Path $Root ".ai_memory-pro\progress.md")
     Assert-True ($progressRules -match 'main agent') "progress.md must define main-agent ownership."
@@ -484,6 +496,10 @@ function Assert-FastStartupRules {
         Assert-True ($adapterText -match 'real intent|raw wording') "$($adapter.Name) must require intent translation."
         Assert-True ($adapterText -match 'context compression|checkpoint|resume|model switch') "$($adapter.Name) must define checkpointed resume behavior."
         Assert-True ($adapterText -match 'Startup Summary') "$($adapter.Name) must require a startup summary after Fast startup."
+        Assert-True ($adapterText -match 'requirements/current\.md') "$($adapter.Name) must trigger first requirement initialization."
+        Assert-True ($adapterText -match 'Latest User Intent Wins') "$($adapter.Name) must apply direct requirement replacement."
+        Assert-True ($adapterText -match 'SUPERSEDED') "$($adapter.Name) must preserve superseded requirement history."
+        Assert-True ($adapterText -match 'does not mean implementation') "$($adapter.Name) must separate requirement sync from implementation."
         Assert-ToolAgnosticText -Text $adapterText -Name $adapter.Name
     }
 }
