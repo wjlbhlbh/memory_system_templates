@@ -32,6 +32,21 @@ $externalDisplayPath = Join-Path ([IO.Path]::GetTempPath()) "memory-system-exter
 $externalDisplayResult = Get-RelativePath $externalDisplayPath
 Assert-True ($externalDisplayResult -eq $externalDisplayPath) "Get-RelativePath must preserve paths outside the verification root."
 
+function Get-TextMetrics {
+    param([string]$Path)
+
+    $text = [IO.File]::ReadAllText($Path, [Text.Encoding]::UTF8)
+    $lineLengths = @($text -split "`r?`n" | ForEach-Object { $_.Length })
+    $maximumLine = if ($lineLengths.Count -gt 0) { ($lineLengths | Measure-Object -Maximum).Maximum } else { 0 }
+
+    return [pscustomobject]@{
+        Bytes = (Get-Item -LiteralPath $Path).Length
+        Characters = $text.Length
+        Lines = $lineLengths.Count
+        MaxLineCharacters = $maximumLine
+    }
+}
+
 function Assert-Utf8NoBom {
     param([System.IO.FileInfo]$File)
 
@@ -126,11 +141,15 @@ function Assert-PrimaryMemoryHealth {
     $progressPath = Join-Path $MemoryPath "progress.md"
     $activeContext = Get-Content -Raw -Encoding UTF8 $activeContextPath
     $progress = Get-Content -Raw -Encoding UTF8 $progressPath
-    $activeLines = (Get-Content -Encoding UTF8 $activeContextPath).Count
-    $progressLines = (Get-Content -Encoding UTF8 $progressPath).Count
+    $index = Get-Content -Raw -Encoding UTF8 (Join-Path $MemoryPath "index.json") | ConvertFrom-Json
+    $activeMetrics = Get-TextMetrics $activeContextPath
+    $progressMetrics = Get-TextMetrics $progressPath
 
-    Assert-True ($activeLines -le 90) "activeContext.md must stay within its active-window budget; current line count: $activeLines"
-    Assert-True ($progressLines -le 120) "progress.md must stay within its rolling-window budget; current line count: $progressLines"
+    Assert-True ($activeMetrics.Lines -le $index.budgets.active_context.hard_max_lines) "activeContext.md must stay within its active-window line budget; current line count: $($activeMetrics.Lines)"
+    Assert-True ($activeMetrics.Characters -le $index.budgets.active_context.hard_max_characters) "activeContext hard character budget exceeded: $($activeMetrics.Characters)"
+    Assert-True ($activeMetrics.MaxLineCharacters -le $index.budgets.active_context.max_single_line_characters) "activeContext single-line budget exceeded: $($activeMetrics.MaxLineCharacters)"
+    Assert-True ($progressMetrics.Lines -le $index.budgets.progress.hard_max_lines) "progress.md must stay within its rolling-window line budget; current line count: $($progressMetrics.Lines)"
+    Assert-True ($progressMetrics.Characters -le $index.budgets.progress.hard_max_characters) "progress hard character budget exceeded: $($progressMetrics.Characters)"
 
     $checkpointMatches = [regex]::Matches($progress, "CHK-\d{3}") | ForEach-Object { $_.Value }
     $duplicates = $checkpointMatches | Group-Object | Where-Object { $_.Count -gt 1 }
@@ -247,16 +266,22 @@ function Assert-IndexIsComplete {
     Assert-True (Test-Path $indexPath) "Missing index.json in $MemoryPath"
 
     $index = Get-Content -Raw -Encoding UTF8 $indexPath | ConvertFrom-Json
-    foreach ($entry in $index.bootstrap_order) {
-        $entryPath = Join-Path $MemoryPath $entry
-        Assert-True (Test-Path $entryPath) "bootstrap_order references missing file: $entryPath"
-    }
+    Assert-True ($index.PSObject.Properties.Name -contains "budgets") "index.json must define machine-verifiable memory budgets."
+    Assert-True (-not ($index.PSObject.Properties.Name -contains "bootstrap_order")) "index.json must not expose a full bootstrap_order that can be mistaken for mandatory startup reads."
+    Assert-True ($index.budgets.startup.max_files -eq 3) "Startup budget must allow exactly three files."
+    Assert-True ($index.budgets.startup.hard_max_characters -gt 0) "Startup budget must define a hard character limit."
+    Assert-True ($index.budgets.active_context.hard_max_characters -gt 0) "activeContext budget must define a hard character limit."
+    Assert-True ($index.budgets.active_context.max_single_line_characters -gt 0) "activeContext budget must define a single-line limit."
 
-    Assert-True ($index.startup_order.Count -gt 0) "index.json must define startup_order for fast startup."
+    Assert-True ($index.startup_order.Count -eq $index.budgets.startup.max_files) "startup_order must contain exactly the budgeted number of files."
+    $startupCharacters = 0
     foreach ($entry in $index.startup_order) {
         $entryPath = Join-Path $MemoryPath $entry
         Assert-True (Test-Path $entryPath) "startup_order references missing file: $entryPath"
+        $startupCharacters += (Get-TextMetrics $entryPath).Characters
     }
+    Assert-True ($startupCharacters -le $index.budgets.startup.hard_max_characters) "Startup capsule exceeds hard character budget: $startupCharacters"
+    Assert-True ((Get-TextMetrics $indexPath).Characters -le $index.budgets.index.hard_max_characters) "index.json exceeds its hard character budget."
 
     $requiredText = ($index.required_before_work -join "`n")
     Assert-True ($requiredText -notmatch "Read all Markdown files under \.ai_memory in full") "Startup rules must not require reading every Markdown file in full."
