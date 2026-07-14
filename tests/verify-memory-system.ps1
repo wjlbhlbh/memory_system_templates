@@ -628,6 +628,45 @@ try {
     Assert-True ($LASTEXITCODE -ne 0) "Tampered archive must fail hash verification."
     Assert-True (($tamperedArchiveOutput -join "`n") -match "Archive SHA-256 mismatch") "Archive failure must identify the hash mismatch."
 
+    Write-Output "Checking legacy memory migration..."
+    $migrationTool = Join-Path $Root "migrate-memory.ps1"
+    Assert-True (Test-Path $migrationTool) "Missing migrate-memory.ps1."
+    $legacyRoot = Join-Path $tempRoot "legacy-project"
+    New-Item -ItemType Directory -Path $legacyRoot | Out-Null
+    & (Join-Path $Root "init-memory.ps1") -Mode Pro -TargetPath $legacyRoot -ProjectName "LegacyTest" -Adapter None | Out-Null
+    $legacyMemory = Join-Path $legacyRoot ".ai_memory"
+    Remove-Item -LiteralPath (Join-Path $legacyMemory "requirements") -Recurse -Force
+    $legacyIndexPath = Join-Path $legacyMemory "index.json"
+    $legacyIndex = Get-Content -Raw -Encoding UTF8 $legacyIndexPath | ConvertFrom-Json
+    $legacyIndex.version = "1.2.0"
+    $legacyIndex.startup_order = @("index.json", "MEMORY.md", "projectbrief.md", "activeContext.md", "agentRules.md")
+    $legacyIndex.PSObject.Properties.Remove("budgets")
+    $legacyIndex | Add-Member -NotePropertyName "bootstrap_order" -NotePropertyValue @("projectbrief.md", "activeContext.md", "progress.md") -Force
+    [IO.File]::WriteAllText($legacyIndexPath, ($legacyIndex | ConvertTo-Json -Depth 20), [Text.UTF8Encoding]::new($false))
+    $legacyHashBefore = (Get-FileHash -LiteralPath $legacyIndexPath -Algorithm SHA256).Hash
+
+    $migrationDryRun = @(& powershell -NoProfile -ExecutionPolicy Bypass -File $migrationTool -TargetPath $legacyRoot 2>&1)
+    Assert-True ($LASTEXITCODE -eq 0) "Migration DryRun must succeed."
+    Assert-True (($migrationDryRun -join "`n") -match "DRY RUN") "Migration must default to DryRun."
+    Assert-True ((Get-FileHash -LiteralPath $legacyIndexPath -Algorithm SHA256).Hash -eq $legacyHashBefore) "Migration DryRun must not modify index.json."
+    Assert-True (-not (Test-Path (Join-Path $legacyRoot ".ai_memory_archive"))) "Migration DryRun must not create an archive."
+
+    $migrationApply = @(& powershell -NoProfile -ExecutionPolicy Bypass -File $migrationTool -TargetPath $legacyRoot -Apply 2>&1)
+    Assert-True ($LASTEXITCODE -eq 0) "Migration Apply must succeed. Output: $($migrationApply -join ' ')"
+    Assert-True (Test-Path (Join-Path $legacyMemory "requirements\current.md")) "Migration must add requirements/current.md."
+    $migratedIndex = Get-Content -Raw -Encoding UTF8 $legacyIndexPath | ConvertFrom-Json
+    Assert-True ($migratedIndex.version -eq "2.0.0") "Migration must upgrade index version to 2.0.0."
+    Assert-True ($migratedIndex.startup_order.Count -eq 3) "Migration must enforce the three-file startup capsule."
+    Assert-True (-not ($migratedIndex.PSObject.Properties.Name -contains "bootstrap_order")) "Migration must remove bootstrap_order."
+    $migrationManifests = @(Get-ChildItem -LiteralPath (Join-Path $legacyRoot ".ai_memory_archive") -Recurse -File -Filter "manifest.json")
+    Assert-True ($migrationManifests.Count -eq 1) "Migration must create exactly one backup manifest."
+    $legacyHealthOutput = @(& powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $legacyRoot "memory-health.ps1") -MemoryPath $legacyMemory -VerifyArchive 2>&1)
+    Assert-True ($LASTEXITCODE -eq 0) "Migrated memory and backup archive must pass health verification."
+    $secondMigration = @(& powershell -NoProfile -ExecutionPolicy Bypass -File $migrationTool -TargetPath $legacyRoot -Apply 2>&1)
+    Assert-True ($LASTEXITCODE -eq 0) "Repeated migration must be idempotent."
+    Assert-True (($secondMigration -join "`n") -match "already current") "Repeated migration must report that the project is already current."
+    Assert-True (@(Get-ChildItem -LiteralPath (Join-Path $legacyRoot ".ai_memory_archive") -Recurse -File -Filter "manifest.json").Count -eq 1) "Repeated migration must not create another backup."
+
     $setupTodo = Get-Content -Raw -Encoding UTF8 (Join-Path $tempRoot ".ai_memory\SETUP_TODO.md")
     Assert-True ($setupTodo -match "tool_adapters/") "SETUP_TODO.md must render tool_adapters/ literally."
     Assert-True ($setupTodo -notmatch ([char]9 + "ool_adapters/")) "SETUP_TODO.md must not contain a tab caused by PowerShell backtick escaping."
