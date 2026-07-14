@@ -541,6 +541,31 @@ try {
     Get-Content -Raw -Encoding UTF8 (Join-Path $tempRoot ".ai_memory\index.json") | ConvertFrom-Json | Out-Null
     Assert-ProjectFastStartupRules $tempRoot
 
+    Write-Output "Checking latest-user-wins requirement updates..."
+    $requirementTool = Join-Path $Root "record-requirement-change.ps1"
+    Assert-True (Test-Path $requirementTool) "Missing record-requirement-change.ps1."
+    $generatedMemory = Join-Path $tempRoot ".ai_memory"
+    $requirementTitle = [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String("5Yig6Zmk5p2D6ZmQ"))
+    $requirementV1 = [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String("5pmu6YCa55So5oi35Y+v55u05o6l5Yig6Zmk"))
+    $requirementV2 = [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String("5pmu6YCa55So5oi35o+Q5Lqk55Sz6K+377yM55Sx566h55CG5ZGY5a6h5qC4"))
+    & $requirementTool -MemoryPath $generatedMemory -RequirementId "REQ-001" -Title $requirementTitle -Statement $requirementV1 -SourceType "user" -SourceRef "turn-1" | Out-Null
+    & $requirementTool -MemoryPath $generatedMemory -RequirementId "REQ-001" -Title $requirementTitle -Statement $requirementV2 -SourceType "user" -SourceRef "turn-2" | Out-Null
+
+    $currentRequirements = Get-Content -Raw -Encoding UTF8 (Join-Path $generatedMemory "requirements\current.md")
+    Assert-True ($currentRequirements.Contains($requirementV2)) "Latest explicit requirement must become the current baseline."
+    Assert-True (-not $currentRequirements.Contains($requirementV1)) "Superseded requirement text must not remain active in the current baseline."
+    Assert-True ($currentRequirements -match "REQ-001 v1 -> v2") "Current baseline must index the superseded version."
+    Assert-True ($currentRequirements -match "implementation_pending") "Requirement synchronization must not claim implementation is complete."
+
+    $requirementEvents = @(Get-Content -Encoding UTF8 (Join-Path $generatedMemory "requirements\change-log.jsonl") | Where-Object { $_.Trim() } | ForEach-Object { $_ | ConvertFrom-Json })
+    $reqEvents = @($requirementEvents | Where-Object { $_.requirement_id -eq "REQ-001" })
+    Assert-True ($reqEvents.Count -eq 2) "Two explicit user requirements must create two audit events."
+    Assert-True (($reqEvents | Sort-Object version | Select-Object -Last 1).previous_version -eq 1) "The replacement event must link to the superseded version."
+    Assert-True (($reqEvents | Sort-Object version | Select-Object -Last 1).status -eq "active") "The newest requirement event must be active."
+
+    $activeAfterRequirement = Get-Content -Raw -Encoding UTF8 (Join-Path $generatedMemory "activeContext.md")
+    Assert-True ($activeAfterRequirement -match "Requirement Baseline.*2") "activeContext.md must expose the latest requirement baseline version."
+
     $setupTodo = Get-Content -Raw -Encoding UTF8 (Join-Path $tempRoot ".ai_memory\SETUP_TODO.md")
     Assert-True ($setupTodo -match "tool_adapters/") "SETUP_TODO.md must render tool_adapters/ literally."
     Assert-True ($setupTodo -notmatch ([char]9 + "ool_adapters/")) "SETUP_TODO.md must not contain a tab caused by PowerShell backtick escaping."

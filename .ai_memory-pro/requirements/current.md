@@ -20,6 +20,7 @@
 
 ## 当前有效需求
 
+<!-- REQUIREMENTS_ACTIVE_START -->
 ### REQ-001 示例结构（首次建档时替换本示例）
 - **title**: 示例需求
 - **version**: 0
@@ -29,6 +30,7 @@
 - **verification_status**: not_verified
 - **affected_memory**: `projectbrief.md`, `activeContext.md`
 
+<!-- REQUIREMENTS_ACTIVE_END -->
 ## 当前业务规则
 - 尚未初始化。
 
@@ -42,4 +44,6 @@
 - 尚未初始化。
 
 ## SUPERSEDED 需求索引
+<!-- REQUIREMENTS_SUPERSEDED_START -->
 - 暂无。记录 Requirement ID、旧版本、新版本、变更事件和一句话原因；完整历史以 `change-log.jsonl` 为准。
+<!-- REQUIREMENTS_SUPERSEDED_END -->
