@@ -222,6 +222,9 @@ function Assert-HistorySearchLayer {
     Assert-True ($searchScript -match "history/index\.jsonl") "search-memory.ps1 must search history/index.jsonl."
     Assert-True ($searchScript -match "Query") "search-memory.ps1 must support query text."
     Assert-True ($searchScript -match "Tag") "search-memory.ps1 must support tag filtering."
+    foreach ($parameterName in @("TaskId", "Type", "Since", "Limit", "VerifyHash")) {
+        Assert-True ($searchScript -match ("\$" + $parameterName + "\b")) "search-memory.ps1 must support $parameterName filtering."
+    }
 }
 
 function Assert-TaskPackLifecycle {
@@ -561,6 +564,9 @@ try {
     $generatedMemory = Join-Path $tempRoot ".ai_memory"
     $generatedHealthTool = Join-Path $tempRoot "memory-health.ps1"
     Assert-True (Test-Path $generatedHealthTool) "init-memory.ps1 must generate memory-health.ps1."
+    foreach ($helperName in @("record-requirement-change.ps1", "compact-memory.ps1", "migrate-memory.ps1", "search-memory.ps1")) {
+        Assert-True (Test-Path (Join-Path $tempRoot $helperName)) "init-memory.ps1 must generate $helperName."
+    }
     $healthOutput = @(& powershell -NoProfile -ExecutionPolicy Bypass -File $generatedHealthTool -MemoryPath $generatedMemory 2>&1)
     Assert-True ($LASTEXITCODE -eq 0) "Healthy generated memory must pass memory-health.ps1. Output: $($healthOutput -join ' ')"
     Assert-True (($healthOutput -join "`n") -match "Startup files: 3 / limit 3") "Health output must report startup file budget."
@@ -622,6 +628,12 @@ try {
     Assert-True ((Get-Item -LiteralPath $archivedActivePath).IsReadOnly) "Archived memory files must be read-only."
     $verifiedArchiveOutput = @(& powershell -NoProfile -ExecutionPolicy Bypass -File $generatedHealthTool -MemoryPath $generatedMemory -VerifyArchive 2>&1)
     Assert-True ($LASTEXITCODE -eq 0) "Untampered archive must pass hash verification."
+    $generatedSearchTool = Join-Path $tempRoot "search-memory.ps1"
+    $searchOutput = @(& powershell -NoProfile -ExecutionPolicy Bypass -File $generatedSearchTool -MemoryPath $generatedMemory -Type "memory-compaction" -TaskId "none" -Since (Get-Date).ToString("yyyy-MM-dd") -Limit 1 -VerifyHash -Json 2>&1)
+    Assert-True ($LASTEXITCODE -eq 0) "Filtered archive search with hash verification must succeed. Output: $($searchOutput -join ' ')"
+    $searchRecords = @(($searchOutput -join "`n") | ConvertFrom-Json)
+    Assert-True ($searchRecords.Count -eq 1) "Search -Limit 1 must return exactly one matching record."
+    Assert-True ($searchRecords[0].type -eq "memory-compaction") "Search -Type must filter archive records."
     (Get-Item -LiteralPath $archivedActivePath).IsReadOnly = $false
     [IO.File]::AppendAllText($archivedActivePath, "tamper", [Text.UTF8Encoding]::new($false))
     $tamperedArchiveOutput = @(& powershell -NoProfile -ExecutionPolicy Bypass -File $generatedHealthTool -MemoryPath $generatedMemory -VerifyArchive 2>&1)
