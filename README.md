@@ -81,6 +81,8 @@ Runtime helpers generated into the target project:
 
 `compact-memory.ps1` and `migrate-memory.ps1` default to DryRun. Apply mode creates an exact SHA-256 manifest before replacing or upgrading active memory.
 
+Detailed workflow: `docs/REQUIREMENT_LIFECYCLE.md`.
+
 ## Who Should Use This
 
 - Developers using Codex, Claude Code, Cursor, Cline, Roo Code, OpenCode, Antigravity, or multiple AI coding assistants.

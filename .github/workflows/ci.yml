@@ -12,6 +12,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Check template memory health
+        shell: powershell
+        run: powershell -ExecutionPolicy Bypass -File .\memory-health.ps1 -MemoryPath .\.ai_memory-pro
+
       - name: Run verification
         shell: powershell
         run: powershell -ExecutionPolicy Bypass -File .\tests\verify-memory-system.ps1

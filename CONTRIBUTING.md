@@ -21,6 +21,7 @@
 - 修改初始化或同步脚本后，必须运行：
 
 ```powershell
+powershell -ExecutionPolicy Bypass -File .\memory-health.ps1 -MemoryPath .\.ai_memory-pro
 powershell -ExecutionPolicy Bypass -File .\tests\verify-memory-system.ps1
 ```
 
