@@ -70,3 +70,16 @@
 - Questions, hypotheticals, examples, quoted opinions, and unaccepted AI suggestions do not replace requirements.
 - Update only affected memory: project scope -> `projectbrief.md`; current execution -> `activeContext.md`; contracts or permissions -> `interfaces.md`; architecture -> `architecture.md`; long-term trade-offs -> `decisionLog.md`; cancellation or delay -> `backlog.md` and the task ledger.
 - Requirement synchronization does not mean implementation or verification is complete. New or changed requirements default to `implementation_pending` and `not_verified`.
+
+## 10. 前端 UI 防堆砌铁律 (UI Anti-Pile-Up Hard Rules)
+- 涉及任何前端界面 (Web / 移动端 / 管理后台 / 用户前台 / 小程序等) 时，除通用开发纪律外，还必须遵守以下铁律；完整方法论见 `engineeringRules.md` 第 12 节。
+1. 动手前先定“这屏给谁、完成哪一件事”，再决定放什么；能收进二级/标签页/抽屉的绝不平铺。
+2. 新功能先判断是否与现有模块同类；同类则并入，不新开整块。顶层导航 ≤ 5–7 项。
+3. 新增 UI 前过“自检 5 问”：给谁用 / Top3 任务 / 必看置顶 / 偶用收起 / 可省即删；答不出先别做。
+4. 文字克制：短标签、删简介段、按钮写动作词、数字 > 长句；不用变量名/报错码/TODO 等开发术语当界面文字。
+5. 沿用项目既有品牌色，不改色调；改色须先确认。同语义状态全站同色同话。颜色用变量，预留暗色。
+6. 必须设计四态：有数据 / 空态 / 加载中 / 出错。先定响应式断点，窄屏不破版。
+7. a11y：对比度 WCAG AA，键盘可操作，focus 可见。
+8. 导航名 = 页面标题 = 按钮文案。
+9. 覆盖多角色权限差异；功能可隐藏可下架。
+10. 先出原型给人看再写码；交付不破坏现有功能、状态文案全站统一。

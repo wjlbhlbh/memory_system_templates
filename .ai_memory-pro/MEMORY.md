@@ -22,7 +22,7 @@
 - If older context is needed, search `history/index.jsonl` first; do not browse all archives.
 
 ## Memory types
-- **procedural**: rules for how agents should work. Start with `agentRules.md`; load `engineeringRules.md` only when governance detail is needed.
+- **procedural**: rules for how agents should work. Start with `agentRules.md`; load `engineeringRules.md` only when governance detail is needed. For any frontend/UI work, also follow the UI anti-pile-up hard rules in `agentRules.md` (section 10) and the full methodology in `engineeringRules.md` (section 12).
 - **semantic**: durable project facts and contracts. Use `architecture.md`, `interfaces.md`, `systemPatterns.md`, `techContext.md`, `decisionLog.md`, and `pitfalls.md`.
 - **episodic**: task history and verified events. Use `activeContext.md`, `progress.md`, `masterTaskLedger.md`, `task-packs/`, and `history/`.
 
