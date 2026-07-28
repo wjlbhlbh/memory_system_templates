@@ -707,7 +707,7 @@ try {
     try {
         & (Join-Path $Root "init-memory.ps1") -Mode Lite -TargetPath $liteRoot -ProjectName "LiteTest" -Adapter None | Out-Null
     } catch {
-        $liteRejected = $_.Exception.Message -match "Cannot validate argument"
+        $liteRejected = ($_.Exception.Message -match "Cannot validate argument") -or ($_.Exception.GetType().FullName -match "ParameterBindingValidationException")
     }
     Assert-True $liteRejected "Lite mode should be rejected."
 

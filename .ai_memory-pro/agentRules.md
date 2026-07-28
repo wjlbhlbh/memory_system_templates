@@ -63,7 +63,7 @@
 - `history/` 承接早期长日志和过期交接，避免 `activeContext.md` 与 `progress.md` 膨胀。
 - `decisionLog.md`、`backlog.md`、`pitfalls.md`、`interfaces.md`、`architecture.md` 只在确有长期价值或相关改动时更新。
 - 需要更完整的工程治理细则时，再读取 `engineeringRules.md`。
-## 9. Requirement lifecycle
+## 10. Requirement lifecycle
 - If `requirements/current.md` is `[UNINITIALIZED]` and the user supplies requirements, a PRD, a requirement list, or a prototype description, initialize the requirement baseline before implementation.
 - Apply **Latest User Intent Wins**: every new explicit user requirement directly replaces the prior active version without another confirmation gate.
 - Preserve the prior version as `SUPERSEDED` in `requirements/change-log.jsonl`; never silently delete requirement history.
@@ -71,7 +71,7 @@
 - Update only affected memory: project scope -> `projectbrief.md`; current execution -> `activeContext.md`; contracts or permissions -> `interfaces.md`; architecture -> `architecture.md`; long-term trade-offs -> `decisionLog.md`; cancellation or delay -> `backlog.md` and the task ledger.
 - Requirement synchronization does not mean implementation or verification is complete. New or changed requirements default to `implementation_pending` and `not_verified`.
 
-## 10. 前端 UI 防堆砌铁律 (UI Anti-Pile-Up Hard Rules)
+## 11. 前端 UI 防堆砌铁律 (UI Anti-Pile-Up Hard Rules)
 - 涉及任何前端界面 (Web / 移动端 / 管理后台 / 用户前台 / 小程序等) 时，除通用开发纪律外，还必须遵守以下铁律；完整方法论见 `engineeringRules.md` 第 12 节。
 1. 动手前先定“这屏给谁、完成哪一件事”，再决定放什么；能收进二级/标签页/抽屉的绝不平铺。
 2. 新功能先判断是否与现有模块同类；同类则并入，不新开整块。顶层导航 ≤ 5–7 项。
