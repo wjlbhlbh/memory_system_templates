@@ -91,7 +91,7 @@ Apply mode preserves the original bytes under `.ai_memory_archive/`, creates a m
 .\migrate-memory.ps1 -TargetPath . -Apply
 ```
 
-Migration defaults to DryRun. Apply mode creates an immutable pre-migration backup, upgrades the three-file startup and budgets, adds missing requirement lifecycle files, and remains idempotent. It does not silently compact project-specific active history.
+Migration defaults to DryRun. Apply mode creates an immutable pre-migration backup, upgrades to the one-file state-aware startup and bounded task-pack budgets, adds missing requirement lifecycle files, and remains idempotent. Existing active detail is preserved behind a task-pack/archive pointer instead of remaining in every startup.
 
 ## Verification for contributors
 

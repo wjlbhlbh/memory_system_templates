@@ -1,78 +1,23 @@
-# 当前活跃上下文 (Active Context)
-
+# Active Context Capsule
 <!-- REQUIREMENT_BASELINE -->
 - **Requirement Baseline**: 0 ([UNINITIALIZED])
+- **State**: [IDLE]
+- **Task ID**: none
+- **Goal**: waiting for the first real task
+- **Stage**: idle
+- **Latest verified checkpoint**: none
+- **Unverified work**: none
+- **Next action**: follow the latest user request
+- **Blockers**: none
+- **Do not break**: none recorded
+- **Task pack**: none
+- **Resume Reads**: none
+- **Archive pointer**: none
+- **Updated**: __DATE__
 
-## 0. 何时必须更新本文件
-- 本文件由主 Agent (main agent) 单独维护；子 Agent 只回传信息，不直接编辑本文件
-- 本文件是 bounded active window / 活跃窗口，不是全量历史库；只保留当前可接手所需的最小状态
-- 从 `[IDLE]` 进入真实任务时
-- 完成需求翻译、方案锁定或任务分级后
-- 完成一个已验证 checkpoint 后
-- 启动或合并多 Agent 并行任务前后
-- 准备结束当前轮次、担心上下文压缩、切换模型/工具前
-- 状态变为 `[AWAITING_QA]` 或 `[REWORK]` 时
-- 认领、阻塞或完成 `masterTaskLedger.md` 中的长任务时
-- 创建、切换或完成 `task-packs/*.md` 任务包时
-
-## 1. 会话入口规则
-1. 先读取 `index.json`，再读取 `startup_order` 指定的启动文件
-2. 非启动记忆文件只在与当前任务直接相关时按需读取
-3. 如果本文件记录真实未闭合任务，先接管；如果是 `[IDLE]`，直接进入当前任务
-4. 长任务、多 Agent、跨模块任务先读取相关 `masterTaskLedger.md` 条目；若存在任务包，只读对应 `task-packs/*.md`
-5. 未确认目标文件最新快照前，不得应用补丁
-6. 遇到 context compression、模型切换或接管时，先根据“恢复锚点”恢复，不得靠聊天记忆猜前情
-
-## 1.1 活跃窗口上限
-- 本文件只保留：当前目标、阶段、禁止误伤项、锁定文件、最近已验证 checkpoint、最近未验证工作、Resume Reads 和未闭合状态。
-- 长推理、旧交接、调研全文、完整命令输出和已完成任务细节不得长期留在本文件；应移入 `task-packs/*.md` 或 `history/*.md`。
-- 当“当前活跃任务”超过 1 个屏幕或 80 行时，先压缩成 5-10 行摘要，再把完整细节归档，并在 Resume Reads 或归档索引中留下链接。
-- 接手模型默认先读本活跃窗口；只有 Resume Reads、账本任务或任务包明确要求时，才读取更多历史。
-
-## 2. 用户意图翻译卡
-- **用户原话 (Raw Wording)**: 待填写。保留用户最初描述，不替用户重写历史。
-- **真实意图 (Real Intent)**: 待填写。把用户原话翻译成可执行任务目标。
-- **成功标准**: 待填写。写清“做到什么才算完成”。
-- **明确非目标**: 待填写。写清本轮不做什么，避免 AI 自行扩写。
-- **已确认事实**: 待填写。只写已从代码、文档、日志、测试中确认的事实。
-- **当前假设**: 待填写。仅保留会影响方案但尚未证实的判断。
-- **待确认歧义**: 待填写。若为空，表示当前理解已足够执行。
-- **Requirement Checklist 状态**: 未开始。完成前必须逐条映射需求、边界、实现状态与 verification evidence。
-
-## 3. 当前执行任务
-- **全局状态**: [IDLE] - __DATE__ 模板已初始化，等待首个真实任务
-- **当前目标**: 待用户下发首个明确需求
-- **当前阶段**: 待填写（理解 / 方案 / 实施 / 验证 / 交接）
-- **任务分级**: L0 / L1 / L2 / L3（开始执行后必须填写）
-- **是否需用户确认**: 是 / 否（开始执行后必须填写）
-- **禁止误伤项**: 待填写。至少写不应被破坏的模块、页面、接口、数据流或验收口径。
-- **锁定文件**: 无
-- **账本任务**: 无。若来自 `masterTaskLedger.md`，填写任务 ID 与状态。
-- **任务包**: 无。若使用 `task-packs/*.md`，填写相对路径。
-- **下一步动作**: 读取真实项目代码、需求与关键入口；需要多轮接管时再写入活跃任务
-- **阻塞项**: 无
-- **负责范围**: 当前未锁定
-
-## 4. 当前活跃任务
-- 当前无未闭合任务。
-- 只有真实进入多轮任务、被中断任务或需要人工 QA 的任务，才在这里写入任务标题、目标、成功标准、已完成、未完成、下一步和验证证据摘要。
-- 如启用多 Agent，本文件只记录主线整合后的状态，不记录未合并的子 Agent 草稿。
-- 完整子任务上下文写入 `task-packs/*.md`；过期交接和长日志写入 `history/*.md`，本节只保留接手必需摘要和链接。
-
-## 5. 连续开发恢复锚点
-- **最近已验证 Checkpoint**: 无。填写最近一个真实 PASS 的阶段结果。
-- **最近未验证工作**: 无。填写已做但尚未验证、因此恢复时需要谨慎重查的内容。
-- **恢复必读文件 (Resume Reads)**: `projectbrief.md`, `activeContext.md`。若进入真实任务，再补充相关源码、接口、决策、测试文件、账本任务或任务包。
-- **多 Agent 分工**: 当前无。若启用并行任务，记录主线、子任务边界、负责人、合并状态。
-- **接手后第一动作**: 若为 `[IDLE]` 则读取真实项目与需求；若非 `[IDLE]`，先核对最近 checkpoint 与恢复必读文件。
-- **归档索引**: 暂无。若本文件做过窗口压缩，在此列出 `history/*.md` 或 `task-packs/*.md` 链接。
-
-## 6. Requirement Checklist
-| 需求/边界 | 状态 | verification evidence | 备注 |
-|---|---|---|---|
-| 待填写 | TODO |  |  |
-
-## 7. 本次验收证据
-```text
-待填写：真实执行成功的控制台输出
-```
+## Capsule contract
+- This is the only startup memory file. Keep it below 1,800 characters and 30 lines.
+- If State is IDLE/PARKED or the task does not match the latest user request, do not open the old task pack.
+- For a real continuation, read only the exact Task pack and Resume Reads listed above.
+- Store raw wording, acceptance details, logs and handoff detail in the task pack or history, never here.
+- After context compaction, reread only this capsule; never replay startup files or prior summaries.

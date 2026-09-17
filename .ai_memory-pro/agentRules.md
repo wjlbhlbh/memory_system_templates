@@ -1,11 +1,11 @@
 # AI 快速执行规则 (Agent Rules)
 
-## 1. 快速启动 (Fast startup)
-- 新会话先读 `.ai_memory/index.json`，再读取 `startup_order` 中列出的启动文件。
-- 非启动记忆文件只在与当前任务直接相关时读取，不做例行全量装载。
-- `activeContext.md` 为 `[IDLE]` 或空模板时，直接进入当前任务。
-- 发现真实未闭合任务、失败验证或人工 QA 状态时，先接管再继续。
-- 完成启动后输出一行 Startup Summary：已读文件、当前状态、是否需要读取账本或任务包。
+## 1. 状态感知启动 (State-aware startup)
+- 新会话只读 `.ai_memory/activeContext.md`；`index.json`、`projectbrief.md` 和其他记忆文件都不是启动载荷。
+- `activeContext.md` 为 `[IDLE]` / `[PARKED]`，或旧任务与用户最新要求不匹配时，直接执行最新要求，不打开旧任务包。
+- 只有用户确实在续接当前任务时，才读取胶囊中精确列出的 `Task pack` 与 `Resume Reads`。
+- 需求、架构、模块、决策、踩坑、进度和历史只在当前任务需要时按需读取；历史先查索引再打开正文。
+- 大文件先搜索定位再分段读取，禁止把完整文件、长日志或完整命令输出塞进启动上下文。
 
 ## 2. 意图澄清闸门 (Intent Gate)
 - 开始实施前，先把用户原话 (raw wording) 翻译成：真实意图 (real intent)、成功标准、明确非目标、任务分级。
@@ -32,20 +32,20 @@
 - 执行任务包时必须遵守其中的 required reading 和 do not read，避免重复读取无关历史。
 
 ## 6. 连续开发与记忆写回
-- `activeContext.md` 是当前执行真相源，不只是备注页；在状态变化、计划锁定、阶段完成、并行分工、准备中断或担心上下文压缩时必须更新。
+- `activeContext.md` 是指针型启动胶囊；只保存任务 ID、状态、目标、最近验证 checkpoint、下一步和精确恢复指针，详细内容进入任务包或历史。
 - `progress.md` 只记录已验证通过的 checkpoint；长任务拆成多个可验证小闭环，不等全部结束才补写。
 - 多 Agent 并行时，`activeContext.md` 和 `progress.md` 只能由主 Agent (main agent) 写入；子 Agent 只回传目标边界、修改文件、验证结果和风险，不直接改主记忆。
 - 多 Agent、长任务或跨模块任务的认领、阻塞、完成必须同步 `masterTaskLedger.md`；任务上下文过大时，用 `task-packs/` 承载自包含上下文包。
 - 读取或修改记忆文件必须使用 explicit UTF-8；任何工具、命令、编辑器或补丁方式都可以使用，但不得依赖默认编码或隐式文本输出 (default encoding / implicit text output)，写入后必须保持可读的 UTF-8 文本。
 - 如果记忆文件出现 mojibake/乱码，先停止业务改动，使用 explicit UTF-8 重新读取或修复到可读文本，再继续执行任务。
 - 长任务必须按 checkpoint 持续写回，不得等到任务结束时一次性重写整份记忆。
-- `activeContext.md` 必须保持 bounded active window / 活跃窗口：只保留当前任务、最近恢复锚点、Resume Reads、禁止误伤项和未闭合状态；超过窗口的长推理、旧交接和细碎日志移入 `task-packs/` 或 `history/`。
+- `activeContext.md` 必须保持 bounded startup capsule / 有界启动胶囊：不得保存用户原话全文、完整文件、长推理、旧摘要、旧交接或细碎日志；这些内容移入 `task-packs/` 或 `history/`。
 - `progress.md` 必须保持 rolling window / 滚动窗口：只保留近期关键 checkpoint、当前仍会影响判断的验证事实和 archive index / 归档索引链接。
 
 ## 7. 恢复协议 (Resume Protocol)
-- 发生 context compression、模型切换、工具切换或接管中断任务时，先重跑 Fast startup，再按 `activeContext.md` 的恢复锚点继续。
-- 恢复时优先读取 `activeContext.md` 中列出的恢复必读文件，而不是重新回忆整段历史对话。
-- 如果恢复锚点指向 `masterTaskLedger.md` 或 `task-packs/*.md`，只读取相关任务条目或任务包，不重新读取全量记忆。
+- 发生 context compression、模型切换、工具切换或接管中断任务时，只重读 `activeContext.md`。
+- 确认是同一任务后，再读取胶囊精确列出的任务包和 Resume Reads；不得重放启动文件、旧摘要或整段历史对话。
+- 不相关的新任务应使用干净会话，不续接陈旧上下文。
 
 ## 8. 验证与完成
 - 没有真实执行证据，不得标记完成。

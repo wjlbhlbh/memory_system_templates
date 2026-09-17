@@ -16,8 +16,8 @@
 
 ## 质量要求
 - Agent 可读文件必须是 UTF-8 无 BOM。
-- 修改 `.ai_memory-*` 后，确认 `index.json` 的 `startup_order` 和 `bootstrap_order` 不引用缺失文件。
-- 不要把非必要文件加入 `startup_order`；启动路径应保持轻量，复杂上下文按需读取。
+- 修改 `.ai_memory-*` 后，确认 `index.json` 的 `startup_order` 只包含 `activeContext.md`，且不存在旧 `bootstrap_order`。
+- 不要把 `index.json`、`projectbrief.md` 或其他文件加入启动载荷；复杂上下文通过精确任务包和 Resume Reads 按需读取。
 - 修改初始化或同步脚本后，必须运行：
 
 ```powershell

@@ -1,5 +1,7 @@
 # Requirement-Driven Memory Lifecycle Implementation Plan
 
+> **Historical V2 plan:** V3 supersedes its three-file startup with `activeContext.md` as the only startup file. Keep the steps below as implementation history, not current operating instructions.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** 将模板升级为三文件预算化启动、首次需求建档、最新用户需求直接覆盖、可审计变更、可验证压缩和旧项目迁移的记忆生命周期系统。

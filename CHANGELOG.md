@@ -1,7 +1,9 @@
 # Changelog
 
 ## Unreleased
-- Added a three-file startup capsule with hard character, line, and single-line budgets.
+- Upgraded to V3 state-aware startup: `activeContext.md` is the only startup file; `index.json`, `projectbrief.md`, progress, history, and task detail are on demand.
+- Added bounded task-pack budgets, CJK-aware static token estimates, and `claude-context-health.ps1` for instruction/rule/skill/session diagnostics.
+- Updated safe migration to preserve the complete pre-V3 memory tree with SHA-256 and move old active detail behind an exact task-pack/archive pointer.
 - Added first-requirement business initialization and Latest User Intent Wins lifecycle rules.
 - Added `requirements/current.md` and append-only `requirements/change-log.jsonl`.
 - Added deterministic requirement replacement, memory health, safe compaction, SHA-256 archive verification, and legacy migration tools.

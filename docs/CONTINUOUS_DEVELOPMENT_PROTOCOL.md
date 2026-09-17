@@ -93,17 +93,17 @@
 
 恢复顺序应该固定为：
 
-1. 重新读取 `.ai_memory/index.json`
-2. 重新读取 `startup_order`
-3. 读取 `activeContext.md` 的最近 checkpoint 和恢复必读文件
-4. 如恢复锚点指向任务账本或任务包，只读相关 `masterTaskLedger.md` 条目或对应 `task-packs/*.md`
-5. 只按需补读相关源码、接口、决策、测试文件
-6. 从最近 verified checkpoint 继续
+1. 只重新读取 `.ai_memory/activeContext.md`
+2. 判断胶囊任务是否与用户最新要求一致；不一致则停止加载旧记忆
+3. 确认是真实续接后，只读胶囊精确列出的 `Task pack` 与 `Resume Reads`
+4. 只按需补读相关源码、接口、决策、测试文件
+5. 从最近 verified checkpoint 继续
 
 不应该做的事：
 
 - 靠印象复述之前聊过什么
 - 从头再读所有记忆文件
+- 重放旧摘要、启动文件或完整工具输出
 - 因为上下文丢了就重新走一遍前期分析
 
 如果恢复需要旧日志、历史交接或过期任务细节，应先检索 `history/index.jsonl`，再打开命中的归档文件。可用根目录 `search-memory.ps1 -Query <text>` 或 `search-memory.ps1 -Tag <tag>` 缩小读取范围。

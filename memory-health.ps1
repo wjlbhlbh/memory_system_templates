@@ -13,6 +13,11 @@ function Add-HealthError {
     $script:errors.Add($Message)
 }
 
+function Add-HealthWarning {
+    param([string]$Message)
+    $script:warnings.Add($Message)
+}
+
 function Get-TextMetrics {
     param([string]$Path)
 
@@ -24,7 +29,18 @@ function Get-TextMetrics {
         Characters = $text.Length
         Lines = $lineLengths.Count
         MaxLineCharacters = $maximumLine
+        EstimatedTokens = Get-EstimatedTokenCount -Text $text
     }
+}
+
+function Get-EstimatedTokenCount {
+    param([string]$Text)
+
+    if (-not $Text) { return 0 }
+    $cjkCharacters = [regex]::Matches($Text, '[\p{IsCJKUnifiedIdeographs}\p{IsCJKSymbolsandPunctuation}\p{IsHiragana}\p{IsKatakana}\p{IsHangulSyllables}]').Count
+    $otherCharacters = [Math]::Max(0, $Text.Length - $cjkCharacters)
+    $lineOverhead = [Math]::Ceiling((@($Text -split "`r?`n").Count) / 2.0)
+    return [int]($cjkCharacters + [Math]::Ceiling($otherCharacters / 3.0) + $lineOverhead)
 }
 
 if (-not (Test-Path -LiteralPath $MemoryPath)) {
@@ -47,18 +63,24 @@ if ($startupCount -ne $startupLimit) {
     Add-HealthError "Startup file count mismatch: $startupCount / limit $startupLimit"
 }
 $startupCharacters = 0
+$startupEstimatedTokens = 0
 foreach ($entry in @($index.startup_order)) {
     $entryPath = Join-Path $resolvedMemory $entry
     if (-not (Test-Path -LiteralPath $entryPath)) {
         Add-HealthError "Missing startup file: $entry"
         continue
     }
-    $startupCharacters += (Get-TextMetrics $entryPath).Characters
+    $startupMetrics = Get-TextMetrics $entryPath
+    $startupCharacters += $startupMetrics.Characters
+    $startupEstimatedTokens += $startupMetrics.EstimatedTokens
 }
 if ($startupCharacters -gt [int]$index.budgets.startup.hard_max_characters) {
     Add-HealthError "Startup hard character budget exceeded: $startupCharacters"
 } elseif ($startupCharacters -gt [int]$index.budgets.startup.warn_characters) {
     $warnings.Add("Startup warning character budget exceeded: $startupCharacters")
+}
+if ($startupEstimatedTokens -gt [int]$index.budgets.startup.estimated_token_limit) {
+    Add-HealthError "Startup estimated token budget exceeded: $startupEstimatedTokens"
 }
 
 $indexMetrics = Get-TextMetrics $indexPath
@@ -93,6 +115,22 @@ if (Test-Path -LiteralPath $progressPath) {
     }
 }
 
+$taskPackCount = 0
+$oversizedTaskPacks = New-Object System.Collections.Generic.List[string]
+$taskPackRoot = Join-Path $resolvedMemory "task-packs"
+if (($index.budgets.PSObject.Properties.Name -contains "task_pack") -and (Test-Path -LiteralPath $taskPackRoot)) {
+    foreach ($taskPack in Get-ChildItem -LiteralPath $taskPackRoot -File -Filter "*.md") {
+        if ($taskPack.Name -eq "README.md") { continue }
+        $taskPackCount++
+        $taskPackMetrics = Get-TextMetrics $taskPack.FullName
+        if ($taskPackMetrics.Characters -gt [int]$index.budgets.task_pack.hard_max_characters -or
+            $taskPackMetrics.Lines -gt [int]$index.budgets.task_pack.hard_max_lines) {
+            $oversizedTaskPacks.Add($taskPack.Name)
+            Add-HealthError "Task pack budget exceeded: $($taskPack.Name) ($($taskPackMetrics.Characters) characters / $($taskPackMetrics.Lines) lines)"
+        }
+    }
+}
+
 $requirementsPath = Join-Path $resolvedMemory "requirements\current.md"
 $requirementState = "MISSING"
 $requirementVersion = -1
@@ -119,8 +157,10 @@ if ((Test-Path -LiteralPath $changeLogPath) -and $requirementVersion -ge 0) {
             if ($record.status -ne "schema") { $requirementEvents += $record }
         } catch { }
     }
-    if ($requirementVersion -ne $requirementEvents.Count) {
-        Add-HealthError "Requirement baseline version does not match change log event count: $requirementVersion / $($requirementEvents.Count)"
+    if ($requirementEvents.Count -lt $requirementVersion) {
+        Add-HealthError "Requirement change log has fewer events than the baseline version: $($requirementEvents.Count) / $requirementVersion"
+    } elseif ($requirementEvents.Count -gt $requirementVersion) {
+        Add-HealthWarning "Requirement change log contains additional lifecycle/status events beyond the baseline version: $($requirementEvents.Count) / $requirementVersion"
     }
 }
 
@@ -154,14 +194,23 @@ if ($VerifyArchive) {
             try {
                 $manifest = Get-Content -Raw -Encoding UTF8 $manifestFile.FullName | ConvertFrom-Json
                 foreach ($fileRecord in @($manifest.files)) {
-                    $archivePath = Join-Path $projectRoot ([string]$fileRecord.archive_path)
+                    if ($fileRecord.PSObject.Properties.Name -contains "archive_path") {
+                        $archivePath = Join-Path $projectRoot ([string]$fileRecord.archive_path)
+                        $displayPath = [string]$fileRecord.archive_path
+                    } elseif ($fileRecord.PSObject.Properties.Name -contains "path") {
+                        $archivePath = Join-Path $manifestFile.DirectoryName ([string]$fileRecord.path)
+                        $displayPath = $archivePath
+                    } else {
+                        Add-HealthError "Archive manifest record has no path: $($manifestFile.FullName)"
+                        continue
+                    }
                     if (-not (Test-Path -LiteralPath $archivePath)) {
-                        Add-HealthError "Archive file is missing: $($fileRecord.archive_path)"
+                        Add-HealthError "Archive file is missing: $displayPath"
                         continue
                     }
                     $actualHash = (Get-FileHash -LiteralPath $archivePath -Algorithm SHA256).Hash.ToLowerInvariant()
                     if ($actualHash -ne ([string]$fileRecord.sha256).ToLowerInvariant()) {
-                        Add-HealthError "Archive SHA-256 mismatch: $($fileRecord.archive_path)"
+                        Add-HealthError "Archive SHA-256 mismatch: $displayPath"
                     }
                 }
             } catch {
@@ -171,14 +220,16 @@ if ($VerifyArchive) {
     }
 }
 
-$estimatedTokens = [Math]::Ceiling($startupCharacters / 3.0)
 $status = if ($errors.Count -eq 0) { "PASS" } else { "FAIL" }
 $result = [ordered]@{
     status = $status
     startup_files = $startupCount
     startup_file_limit = $startupLimit
     startup_characters = $startupCharacters
-    estimated_tokens = $estimatedTokens
+    estimated_tokens = $startupEstimatedTokens
+    estimated_token_method = "CJK characters + other characters / 3 + line overhead"
+    task_pack_count = $taskPackCount
+    oversized_task_packs = @($oversizedTaskPacks)
     requirement_baseline_version = $requirementVersion
     requirement_state = $requirementState
     warnings = @($warnings)
@@ -190,7 +241,8 @@ if ($Json) {
 } else {
     Write-Output "Startup files: $startupCount / limit $startupLimit"
     Write-Output "Startup characters: $startupCharacters / hard limit $($index.budgets.startup.hard_max_characters)"
-    Write-Output "Estimated tokens: $estimatedTokens / limit $($index.budgets.startup.estimated_token_limit)"
+    Write-Output "Estimated tokens: $startupEstimatedTokens / limit $($index.budgets.startup.estimated_token_limit) (CJK-aware static estimate)"
+    Write-Output "Task packs: $taskPackCount / oversized $($oversizedTaskPacks.Count)"
     Write-Output "Requirements baseline: $requirementVersion [$requirementState]"
     foreach ($warning in $warnings) { Write-Output "WARN: $warning" }
     foreach ($healthError in $errors) { Write-Output "ERROR: $healthError" }

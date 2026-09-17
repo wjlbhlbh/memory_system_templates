@@ -58,14 +58,14 @@
 - 若运行产物已经被 Git 跟踪，使用 `git rm --cached` 取消跟踪并保留本地文件。
 
 ## 9. 连续开发、并行协作与恢复协议
-- `activeContext.md` 是当前执行真相源；进入多轮任务后，状态变化、方案锁定、verified checkpoint、并行分工、交接前都必须更新。
+- `activeContext.md` 是指针型启动胶囊；进入多轮任务后，只在状态、任务 ID、verified checkpoint、下一步或恢复指针变化时更新，详细过程进入任务包。
 - `progress.md` 只记录已验证事实；长任务按 checkpoint 持续写入，避免上下文压缩后丢失阶段成果。
 - `activeContext.md` 与 `progress.md` 属于单写者文件；多 Agent 并行时只允许主 Agent (main agent) 写入，子 Agent 只能回传：目标边界、修改文件、验证结果、未解决风险。
 - 多 Agent、长任务、跨模块任务必须使用 `masterTaskLedger.md` 记录状态、locked files、verification evidence 和交接要点。
 - 单任务上下文过大时使用 `task-packs/`，且恢复时只读相关任务包，不重读全量历史。
 - 长期历史、过期交接和大段日志进入 `history/`，不得让 `activeContext.md`、`progress.md`、`masterTaskLedger.md` 承担归档库职责。
 - 禁止子 Agent 直接改主记忆，避免并发写入、状态冲突和覆盖主线恢复锚点。
-- 发生 context compression、模型切换、工具切换或人工接管时，先重跑 Fast startup，再按 `activeContext.md` 的恢复必读文件和最近 checkpoint 恢复。
+- 发生 context compression、模型切换、工具切换或人工接管时，只重读 `activeContext.md`；确认续接同一任务后，再按其中精确列出的任务包和 Resume Reads 恢复。
 - 恢复时禁止依赖“聊天里大概提过什么”的印象式记忆，必须回到文件化状态。
 
 ## 10. 完成门禁 (Definition of Done)
@@ -79,7 +79,7 @@
 - 写文件必须显式指定编码，禁止依赖任何工具、编辑器或系统默认编码。
 - 修改记忆文件时，任何工具、命令、编辑器或补丁方式都可以使用，但必须显式保持 UTF-8 无 BOM，不得依赖默认编码或隐式文本输出 (default encoding / implicit text output)。
 - 读取失败、乱码、BOM 导致解析异常、JSON 无法解析时，先修复可读性再继续业务改动。
-- 修改记忆文件后应检查：关键文件可读、`index.json` 可解析、`startup_order` / `bootstrap_order` 不引用不存在的文件。
+- 修改记忆文件后应检查：关键文件可读、`index.json` 可解析、`startup_order` 仅含 `activeContext.md` 且预算未超限。
 
 ## 12. 前端 UI 设计与防堆砌 (UI Design & Anti-Pile-Up)
 - 适用范围：任何项目的所有前端界面 (Web / 移动端 / 管理后台 / 用户前台 / 小程序等)。

@@ -7,7 +7,7 @@
 [![AI Coding](https://img.shields.io/badge/AI%20Coding-Memory%20System-blue)](#why-this-project)
 [![Context Engineering](https://img.shields.io/badge/Context%20Engineering-Memory%20Bank-purple)](#search-keywords)
 
-**English:** A practical, tool-agnostic project memory system for AI coding agents. It gives every repository a lightweight `.ai_memory` layer with fast startup rules, active context, verified progress, module memory, searchable history, task packs, tool adapters, and health checks.
+**English:** A practical, tool-agnostic project memory system for AI coding agents. It gives every repository a lightweight `.ai_memory` layer with a single state-aware startup capsule, verified progress, module memory, searchable history, bounded task packs, tool adapters, and health checks.
 
 **中文：** 这是一套面向 AI 编程 Agent 的项目记忆系统模板。它不是单个 prompt，而是一套可初始化、可验证、可跨工具接管的 `.ai_memory` 工程记忆层，适合长期项目、超大型项目、多 Agent 协作和上下文压缩后的恢复。
 
@@ -17,7 +17,7 @@ AI coding assistants are powerful, but long-running projects still fail in famil
 
 This project turns those failure modes into reusable project memory templates:
 
-- **Fast startup:** read `index.json` and only the files in `startup_order`.
+- **State-aware startup:** read `activeContext.md` only; load an exact task pack only for a real continuation.
 - **Memory Bank structure:** `projectbrief.md`, `activeContext.md`, `progress.md`, `decisionLog.md`, `interfaces.md`, `pitfalls.md`, and more.
 - **Context engineering:** active window, rolling progress window, archive index, and task-scoped reading boundaries.
 - **Multi-agent handoff:** `masterTaskLedger.md` and `task-packs/` for claimable, verifiable work units.
@@ -54,6 +54,7 @@ The initializer creates:
 - `AGENTS.md` for Codex, OpenCode, Antigravity, and AGENTS.md-compatible tools.
 - `CLAUDE.md` for Claude Code.
 - `search-memory.ps1` for searching archived project memory.
+- `claude-context-health.ps1` for auditing Claude instruction, rule, skill-description, project-memory, and recent-session context costs.
 - `.ai_memory/SETUP_TODO.md` with the few fields you should fill first.
 
 ## Requirement-Driven Memory Lifecycle
@@ -77,6 +78,7 @@ Runtime helpers generated into the target project:
 .\migrate-memory.ps1 -TargetPath .
 .\migrate-memory.ps1 -TargetPath . -Apply
 .\search-memory.ps1 -MemoryPath .ai_memory -Type memory-compaction -Since 2026-01-01 -Limit 10 -VerifyHash
+.\claude-context-health.ps1 -ProjectPath . -IncludeSessionMetrics
 ```
 
 `compact-memory.ps1` and `migrate-memory.ps1` default to DryRun. Apply mode creates an exact SHA-256 manifest before replacing or upgrading active memory.
@@ -95,7 +97,7 @@ Detailed workflow: `docs/REQUIREMENT_LIFECYCLE.md`.
 | Common approach | This project |
 |---|---|
 | A single prompt or rules file | A complete `.ai_memory` project memory layer |
-| Read everything at startup | Fast startup with `startup_order` and task-scoped loading |
+| Read everything at startup | One state-aware capsule plus exact, task-scoped continuation reads |
 | One growing progress file | Active window, rolling window, archive index, and searchable history |
 | Tool-specific instructions | Tool-agnostic rules plus adapters for popular AI coding tools |
 | Unverified handoff notes | Checkpoints, Requirement Checklist, and verification evidence |
@@ -132,7 +134,7 @@ If this project helps your AI coding workflow:
 AI 编程最常见的失控点不是“不会写代码”，而是上下文断片、文件没读全、凭印象改代码、没有验证就宣称完成、换工具后没人知道上次做到哪。
 
 本项目把这些协作纪律沉淀为一套轻量模板：
-- 新会话先读 `.ai_memory/index.json`，再只读 `startup_order` 指定的启动文件。
+- 新会话只读 `.ai_memory/activeContext.md`；`index.json` 和 `projectbrief.md` 不进入启动上下文。
 - 其他记忆文件按任务需要再读取，避免每次启动都消耗大量上下文。
 - 在真正编码前，先把用户原话翻译成“真实意图 / 成功标准 / 明确非目标 / 风险级别”。
 - 任务按 L0/L1/L2/L3 分级，明确哪些能自动推进、哪些必须确认。
@@ -142,7 +144,7 @@ AI 编程最常见的失控点不是“不会写代码”，而是上下文断�
 - 复杂任务用 `task-packs/` 做单任务上下文包，明确 required reading、do not read、acceptance、Requirement Checklist 和 handoff。
 - 长期历史、旧日志和过期交接进入 `history/`，避免启动文件和进度文件越来越臃肿。
 - 默认支持“减少打扰的一口气交付”：小决策由 Agent 保守判断，除硬性阻塞外持续推进。
-- 上下文压缩、模型切换、工具切换后，先根据 `activeContext.md` 恢复最近 checkpoint，而不是重新猜前文。
+- 上下文压缩、模型切换、工具切换后，只重读 `activeContext.md`；确认是真实续接后，再打开它精确指向的任务包和 Resume Reads。
 - 默认执行源码提交与本地备份分层：源码进 Git，备份进 `.archive/`，运行产物进 `.gitignore`。
 - 入口规则不绑定具体工具 API 名称；Agent 使用当前环境可用的等价文件读取、搜索、编辑和写入能力。
 - Agent 可读文件统一使用 UTF-8 无 BOM；如出现 mojibake/乱码，先修复可读性再继续业务改动。
@@ -173,21 +175,22 @@ AI 编程最常见的失控点不是“不会写代码”，而是上下文断�
 - 单文件脚本、小型 Demo 可以少填字段，但不再维护单独简版模板。
 - 有后端 / 前端 / 数据库 / 部署 / 测试链路或长期商业项目时，完整维护 Pro 文件。
 
-## 本轮 P0-P2 优化落地
+## V3 上下文优化
 
-- P0：入口规则改为工具无关表达，不再要求或抱怨某个固定文件工具名；脚本源码保持 ASCII，Agent 可读文件保持 UTF-8 无 BOM，并通过验证脚本拦截 mojibake/乱码和疑似敏感信息。
-- P1：新增 `MEMORY.md` 作为短启动导航，`index.json` 增加 procedural / semantic / episodic 记忆分类，`activeContext.md` 和 `progress.md` 继续保持活跃窗口与滚动窗口职责。
-- P1：新增 `history/index.jsonl` 和根目录 `search-memory.ps1`，旧日志、长交接、过期细节先进入可检索归档索引，再按需打开具体归档文件。
-- P2：新增 `module-map.json` 与 `modules/README.md`，超大型项目可以按路径加载模块级记忆 overlay，避免接手任务时全量阅读项目历史。
-- P2：任务包增加 DRAFT / READY / IN_PROGRESS / VERIFYING / DONE / ARCHIVED 生命周期和账本 backlink；`decisionLog.md`、`interfaces.md`、`pitfalls.md` 增加状态、最后验证时间、可信度和替代关系字段。
+- 启动载荷收敛为一个不超过 1,800 字符、30 行的 `activeContext.md` 指针胶囊。
+- `index.json`、`projectbrief.md`、进度、历史、模块与需求文件全部改为按任务读取，不再例行预载。
+- 任务详情进入有独立预算的 `task-packs/`；压缩摘要禁止复制完整文件、完整工具输出、旧摘要和规则正文。
+- `memory-health.ps1` 使用 CJK 感知的静态 token 估算，并检查任务包预算。
+- `claude-context-health.ps1` 单独审计 Claude 全局规则、项目规则、Skill 描述、自动记忆和最近会话压缩遥测。
+- 迁移默认 DryRun；Apply 前对旧 `.ai_memory` 做完整 SHA-256 备份，并保留旧 active context 的恢复指针。
 
 ## 工具接入
 `tool_adapters/` 目录里提供了不同 AI 工具的入口模板。核心思想一致：
 
-1. 任何新会话必须先读取 `.ai_memory/index.json`
-2. 再读取 `startup_order` 中列出的启动文件
-3. 其他记忆文件只在与当前任务、目标模块、接口、架构、历史决策、待办、踩坑或验证路径相关时按需读取
-4. 完成快速启动后，L0/L1 任务应直接进入实质开发，只有 L2/L3 或硬性阻塞才停下来确认
+1. 任何新会话只读取 `.ai_memory/activeContext.md`
+2. 如果胶囊为 IDLE/PARKED 或不匹配最新要求，不加载旧任务记忆
+3. 只有真实续接时，才读取胶囊精确列出的任务包和 Resume Reads
+4. 其他记忆文件只在当前任务需要时按需、分段读取
 
 不是把整个 `tool_adapters/` 文件夹复制进新项目。
 默认推荐做法是：在项目根目录同时准备好 `AGENTS.md` 和 `CLAUDE.md`，把常见工具入口一次配齐。
@@ -212,8 +215,8 @@ AI 编程最常见的失控点不是“不会写代码”，而是上下文断�
    - 长任务必须拆成多个小闭环，否则上下文压缩后一定会反复重走前戏。
 
 4. **上下文压缩 / 切模型后，先恢复再继续**
-   - 重新读取 `index.json + startup_order`。
-   - 再读取 `activeContext.md` 中列出的恢复必读文件。
+   - 只重新读取 `activeContext.md`。
+   - 确认是同一任务后，再读取其中精确列出的任务包和 Resume Reads。
    - 从最近 verified checkpoint 接着做，而不是重新靠聊天记忆拼接。
 
 5. **多 LLM 交替开发用全局任务账本**
@@ -310,7 +313,7 @@ powershell -ExecutionPolicy Bypass -File "$templateRepo\sync-tool-adapters.ps1" 
 
 ```text
 不用再向我确认小决策，你自行做合理假设并继续推进。
-先按 .ai_memory/index.json 的 startup_order 完成快速启动，再读取和任务直接相关的文件。
+新会话只读 .ai_memory/activeContext.md；只有真实续接时才打开它精确指向的任务包和 Resume Reads。
 修改代码、补测试、运行验证、按需更新记忆一次做完。
 除非遇到无法自行解决的硬性阻塞，例如缺少密钥、外部平台权限、必须人工扫码/发布、生产不可逆操作，否则不要停下来问我。
 完成后给我最终总结：改了什么、验证结果、哪些产品判断由你代做、还剩什么需要我手工确认。
@@ -325,16 +328,16 @@ powershell -ExecutionPolicy Bypass -File "$templateRepo\sync-tool-adapters.ps1" 
 - Agent 可读文件是否出现疑似 mojibake/乱码。
 - Agent 可读文件是否包含疑似密钥、令牌、私钥或带密码连接串。
 - Pro 的 `index.json` 是否能解析。
-- `startup_order` / `bootstrap_order` 是否引用了真实存在的文件。
-- `MEMORY.md` 是否保持短启动导航职责。
+- `startup_order` 是否只包含真实存在的 `activeContext.md`。
+- `MEMORY.md` 是否保持按需路由职责，而非启动载荷。
 - `memory_types`、`module-map.json`、`modules/README.md`、`history/index.jsonl` 是否完整。
 - 启动规则是否避免全量读取记忆文件，并引导 Agent 快速进入开发。
 - 启动规则和工具入口模板是否避免绑定具体文件工具 API 名称。
 - `activeContext.md` / `progress.md` 是否具备活跃窗口、滚动窗口和归档索引规则。
 - 多 LLM 协作所需的 `masterTaskLedger.md`、`task-packs/README.md`、`history/README.md` 是否存在且包含关键规则。
 - 任务包生命周期、账本 backlink、长期事实 freshness 字段是否存在。
-- 工具入口模板是否要求 Startup Summary 和 Requirement Checklist。
-- `init-memory.ps1`、`sync-tool-adapters.ps1` 和 `search-memory.ps1` 生成或读取的文件是否符合编码要求。
+- 工具入口模板是否要求单胶囊启动、精确续接与 Requirement Checklist。
+- `init-memory.ps1`、`sync-tool-adapters.ps1`、`search-memory.ps1` 和上下文健康检查生成或读取的文件是否符合编码要求。
 
 运行：
 

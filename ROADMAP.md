@@ -4,7 +4,7 @@ This roadmap focuses on making AI Memory System Templates easier to discover, ea
 
 ## Now
 
-- Keep the three-file startup and memory budgets regression-tested.
+- Keep the one-file state-aware startup, task-pack budgets, and context-health diagnostics regression-tested.
 - Collect feedback on requirement baseline initialization, direct requirement replacement, compaction, and migration workflows.
 
 - Keep the Pro template stable and lightweight.

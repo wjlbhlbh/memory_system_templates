@@ -19,7 +19,7 @@
 - 增加无需外部依赖的验证脚本 `tests/verify-memory-system.ps1`。
 - 增加 `.editorconfig`、`.gitattributes`、`.gitignore`，固定编码、换行与运行产物边界。
 - 把“减少打扰的一口气交付”“自动提交推送”“源码与本地备份分层”写入 Pro 规则。
-- 增加 Fast startup：启动时只读取 `startup_order`，其他记忆文件按任务相关性加载，避免全量上下文拖慢开发。
+- 升级为状态感知启动：只读取 `activeContext.md`，其他记忆文件和任务包按当前任务精确加载。
 - 增加基础开源文件：`LICENSE`、`CONTRIBUTING.md`、`SECURITY.md`、`CHANGELOG.md`。
 - 增加 GitHub Actions CI，自动验证模板完整性与编码规范。
 - 增加 GitHub Issue Forms、PR 模板、`CODE_OF_CONDUCT.md`、`SUPPORT.md` 和 `ROADMAP.md`。
@@ -42,8 +42,8 @@
 
 4. 控制上下文成本
    - 不再维护 Lite 简版，避免双模板漂移。
-   - 继续坚持 Fast startup 和按需加载，不把全部治理规则塞进每次启动路径。
-   - Pro 文件超过 150 行时引导归档。
+   - 继续坚持单胶囊启动和按需加载，不把全部治理规则塞进每次启动路径。
+   - 启动胶囊、任务包和进度文件分别按 `index.json` 的预算收敛，超出即归档或拆分。
    - 新规则优先写进 `agentRules.md`，避免到处散落重复指令。
 
 5. 增加跨平台验证

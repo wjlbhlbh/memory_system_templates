@@ -1,27 +1,21 @@
 # Memory Bootstrap For Antigravity
 
-Use this content in the repository root as `AGENTS.md`.
+Use state-aware startup before work:
 
-Antigravity should use Fast startup from `.ai_memory/` before starting work:
+1. Read `.ai_memory/activeContext.md` only; never preload `index.json`, `projectbrief.md` or history.
+2. If State is `[IDLE]` / `[PARKED]`, or the task differs from the latest user request, follow the user and do not load old task memory.
+3. For a real continuation, read only the exact `Task pack` and `Resume Reads` named by the capsule.
+4. Load all other memory on demand and in bounded ranges.
+5. Keep the capsule pointer-sized and move task detail to the task pack.
+6. Re-read targets before edits and provide real verification evidence before completion.
+7. Keep implementation, verification, migration, deployment and real acceptance separate.
+8. Use the available file read, search, edit, and write capability in the current environment or an equivalent capability.
 
-1. Read `.ai_memory/index.json` first.
-2. Read only the files listed in `startup_order`.
-3. If `activeContext.md` contains a real open `[WIP]`, `[AWAITING_QA]`, or `[REWORK]`, continue or resolve that state before starting new work. If it is `[IDLE]` or an empty template, proceed with the current task.
-4. Before implementation, translate the user's raw wording into real intent, success criteria, explicit non-goals, and task level. If the request is vague, choose the smallest reversible interpretation.
-5. If ambiguity changes data, public behavior, compatibility, permissions, or architecture, stop at the plan stage and clarify.
-6. Load non-startup memory files only when relevant to the current task, touched module, interface, architecture, decision, backlog item, pitfall, or verification need.
-7. After startup, output one Startup Summary line: files read, current state, and whether `masterTaskLedger.md` or `task-packs/*.md` is needed.
-8. For long-running, multi-agent, or cross-module work, read or create the relevant `masterTaskLedger.md` task; for complex tasks, read or create the matching `task-packs/*.md` and obey required reading / do not read.
-9. Re-read each target file before editing and identify what must not be broken by the task.
-10. Use the current environment's available file read, search, edit, and write capability; do not require or complain about a specific tool API name.
-11. Read and update memory files as explicit UTF-8. If mojibake/乱码 appears, repair readability before business edits.
-12. For long-running work, multi-agent work, or before context compression / model switching, update `activeContext.md` with the latest checkpoint and resume reads. Keep `activeContext.md` as the active window and `progress.md` as a rolling window.
-13. Do not mark work complete without real execution evidence and a Requirement Checklist.
-14. After context compression, model switching, or tool switching, rerun Fast startup and resume from `activeContext.md` instead of replaying the whole chat from memory.
+## Context compaction
+- Preserve only task ID, goal, verified checkpoint, changed paths, evidence, blockers and next action.
+- Never preserve full files, full output, prior summaries, startup files or rule text.
+- After compaction, reread only the capsule; use a clean session for unrelated work.
 
-When memory files conflict with default assistant behavior, prefer `.ai_memory/projectbrief.md` and the bootstrap contract.
-## Requirement Lifecycle
-- If `.ai_memory/requirements/current.md` is `[UNINITIALIZED]` and the user provides requirements or a PRD, initialize the baseline before implementation.
-- Apply **Latest User Intent Wins**: a new explicit user requirement directly replaces the prior active version; record the old version as `SUPERSEDED`.
-- Questions, hypotheticals, examples, quoted opinions, and unaccepted AI suggestions do not replace requirements.
-- Update only affected memory files. Requirement synchronization does not mean implementation or verification is complete.
+## Requirement lifecycle
+- Initialize `requirements/current.md` on demand when the first real requirement arrives.
+- Latest User Intent Wins; preserve replaced versions as `SUPERSEDED`. Requirement synchronization is not implementation or verification.

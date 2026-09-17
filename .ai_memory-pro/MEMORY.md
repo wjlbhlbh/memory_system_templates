@@ -1,50 +1,25 @@
 # Memory Hub
 
-> Purpose: short human/LLM-readable index for Fast startup. Keep this file under 200 lines. Do not store long logs here.
+> Human and LLM navigation map. This file is on demand and is never startup payload.
 
-## Current status
-- **Project**: __PROJECT_NAME__
-- **State**: [IDLE]
-- **Latest verified checkpoint**: none
-- **Active task**: none
-- **Primary resume source**: `activeContext.md`
+## State-aware startup
+1. Read `activeContext.md` only.
+2. If it is IDLE/PARKED or does not match the latest user request, stop loading old task memory.
+3. For a real continuation, read only its exact `task-packs/*.md` pointer and Resume Reads.
+4. Never read `index.json`, `projectbrief.md`, progress, history, PRD assets or archives merely because a session started.
 
-## Fast startup
-1. Read `index.json`.
-2. Read the remaining files in `startup_order`; `MEMORY.md` itself is on-demand and is not startup payload.
-3. Use this file only when a human-readable navigation map is useful.
-4. Load non-startup memory only when the current task, module, interface, decision, pitfall, backlog item, task pack, or verification path requires it.
+## Memory routes
+- Durable project purpose and boundaries: `projectbrief.md`
+- Effective requirements: `requirements/current.md`; audit: `requirements/change-log.jsonl`
+- Architecture and stack: `architecture.md`, `systemPatterns.md`, `techContext.md`
+- Contracts and decisions: `interfaces.md`, `decisionLog.md`, `pitfalls.md`
+- Current task detail: the exact `task-packs/*.md` named by `activeContext.md`
+- Verified recent facts: `progress.md`
+- Older evidence: search `history/index.jsonl` before opening an archive
+- Module overlays: consult `module-map.json` only after a touched path is known
 
-## Resume Reads
-- Default startup payload: `projectbrief.md`, `activeContext.md`. Load `agentRules.md` only when detailed governance is needed.
-- If `activeContext.md` points to a ledger task, read the relevant entry in `masterTaskLedger.md`.
-- If `activeContext.md` points to a task pack, read that exact `task-packs/*.md` file.
-- If older context is needed, search `history/index.jsonl` first; do not browse all archives.
-
-## Memory types
-- **procedural**: rules for how agents should work. Start with `agentRules.md`; load `engineeringRules.md` only when governance detail is needed. For any frontend/UI work, also follow the UI anti-pile-up hard rules in `agentRules.md` (section 10) and the full methodology in `engineeringRules.md` (section 12).
-- **semantic**: durable project facts and contracts. Use `architecture.md`, `interfaces.md`, `systemPatterns.md`, `techContext.md`, `decisionLog.md`, and `pitfalls.md`.
-- **episodic**: task history and verified events. Use `activeContext.md`, `progress.md`, `masterTaskLedger.md`, `task-packs/`, and `history/`.
-
-
-## Requirement lifecycle
-- `requirements/current.md` is the current effective requirement baseline.
-- `requirements/change-log.jsonl` is the append-only audit trail.
-- If the baseline is `[UNINITIALIZED]`, the first real requirement or PRD triggers business memory initialization.
-- Latest User Intent Wins; prior versions become `SUPERSEDED`, while implementation and verification remain separate states.
-
-## Module memory
-- Read `module-map.json` to map touched paths to module overlays.
-- Read `modules/README.md` before creating a module overlay.
-- Module overlays are optional, small, and path-scoped. They do not replace source code or tests.
-
-## Searchable history
-- `history/index.jsonl` is the archive index.
-- Use `search-memory.ps1 -Query <text>` or `search-memory.ps1 -Tag <tag>` before opening archive files.
-- Archive files are not part of Fast startup unless listed in Resume Reads.
-
-## Health rules
-- Keep `activeContext.md` as the active window.
-- Keep `progress.md` as the rolling window and archive index.
-- Move old logs, long handoffs, and stale detail to `history/`.
-- Do not store credentials, tokens, private keys, production data, or complete sensitive logs in memory files.
+## Context rules
+- `index.json` is machine configuration for scripts, not an LLM startup document.
+- Keep `activeContext.md` as a pointer-sized capsule; keep task packs bounded and task-specific.
+- Do not copy full code, long command output, old summaries, credentials or production data into memory.
+- On compaction preserve task ID, checkpoint, paths, evidence, blockers and next action only.

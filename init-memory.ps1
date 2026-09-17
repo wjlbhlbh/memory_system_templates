@@ -292,6 +292,7 @@ Copy-MemoryHelperScript -SourceFileName "memory-health.ps1" -DestinationFileName
 Copy-MemoryHelperScript -SourceFileName "record-requirement-change.ps1" -DestinationFileName "record-requirement-change.ps1"
 Copy-MemoryHelperScript -SourceFileName "compact-memory.ps1" -DestinationFileName "compact-memory.ps1"
 Copy-MemoryHelperScript -SourceFileName "migrate-memory.ps1" -DestinationFileName "migrate-memory.ps1"
+Copy-MemoryHelperScript -SourceFileName "claude-context-health.ps1" -DestinationFileName "claude-context-health.ps1"
 
 function Copy-AdapterTemplate {
     param(
@@ -351,18 +352,18 @@ Tool adapter: $Adapter
 
 ## Fill these first
 1. When the first real requirement or PRD arrives, initialize `requirements/current.md` and append `requirements/change-log.jsonl` before implementation.
-2. Derive projectbrief.md business goals, users, success criteria, scope, non-goals, and do-not-break rules from the current requirement baseline.
+2. Derive projectbrief.md business goals, users, success criteria, scope, non-goals, and do-not-break rules from the current requirement baseline. This file is on demand, not startup payload.
 3. Check techContext.md and confirm detected stack/version requirements.
    - Do not repeatedly maintain stable host-machine facts such as Windows, PowerShell, or local machine versions.
    - Add runtime/toolchain versions only when the project truly depends on them.
    - If this script detected version requirements, verify that the source is a real project constraint.
 4. Add the top 1-3 critical contracts in interfaces.md.
 5. Fill architecture.md with the architecture map and core modules.
-6. Before the first long task, fill activeContext.md with raw wording, real intent, success criteria, non-goals, and Resume Reads.
+6. Keep activeContext.md as the single pointer-sized startup capsule. Put raw wording, acceptance detail, handoff evidence, and exact Resume Reads in the task pack.
 7. If the project needs multiple LLM handoffs, split tasks in masterTaskLedger.md.
 8. If a task has too much context, create a task pack under task-packs/ with required reading, do not read, acceptance, and handoff.
 9. Keep root AGENTS.md and CLAUDE.md when possible so tool switching remains easy.
-10. Run memory-health.ps1 after first initialization and every requirement baseline change.
+10. Run memory-health.ps1 after first initialization and every requirement baseline change. Claude Code users should also run claude-context-health.ps1.
 11. If -Adapter did not generate entry files, copy the needed template from tool_adapters/ manually.
 
 ## Can be filled later
@@ -377,7 +378,7 @@ Tool adapter: $Adapter
 - Project name, path, date, OS, and shell placeholders filled
 - Static host facts usually do not need repeated manual maintenance
 - $adapterSummary
-- Runtime helpers generated: search, health, requirement change, compaction, and migration
+- Runtime helpers generated: search, memory health, Claude context health, requirement change, compaction, and migration
 - Initial requirement state is [UNINITIALIZED] until the first real user requirement or PRD is recorded
 "@
 Write-TextFile -Path $todoPath -Content $todo
