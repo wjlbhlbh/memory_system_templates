@@ -18,3 +18,6 @@
 ## 需求生命周期
 - 首份真实需求到达时按需初始化 `requirements/current.md`。
 - Latest User Intent Wins；旧版本记为 `SUPERSEDED`，需求同步不等于实现或验证。
+
+## 经验复用（按需）
+- 相关操作前或首次失败准备重试时，搜索 `.ai_memory/pitfalls.md`；若设置了 `AI_EXPERIENCE_DIR`，也搜索其中 `entries/EXP-*.md`，只读命中条目。经验证且无敏感信息的项目经验写本项目，通用经验查重后新增独立共享文件。

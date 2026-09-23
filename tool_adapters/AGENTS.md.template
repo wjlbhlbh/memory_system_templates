@@ -21,3 +21,7 @@
 ## Requirement lifecycle
 - 首份真实需求到达且基线未初始化时，按需读取并初始化 `requirements/current.md`。
 - Latest User Intent Wins；旧版本记为 `SUPERSEDED`，需求同步不等于实现或验证完成。
+
+## 经验复用（按需）
+- 确定任务后，遇到相关工具操作或首次失败准备重试时，搜索项目 `.ai_memory/pitfalls.md`；若 `AI_EXPERIENCE_DIR` 已设置，同时搜索其中 `entries/EXP-*.md`。只读命中的经验，不在启动时预读。
+- 解决办法经验证且有长期价值时，先查重：项目专属经验写项目记忆，跨项目通用经验在共享目录新增独立文件；不写密钥、隐私数据或完整日志。

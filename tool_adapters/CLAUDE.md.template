@@ -21,3 +21,7 @@ Before work, use state-aware startup:
 ## Requirement lifecycle
 - If the baseline is uninitialized and the user supplies a real requirement, load and initialize `requirements/current.md` on demand.
 - Latest User Intent Wins; preserve replaced versions as `SUPERSEDED`. Requirement synchronization is not implementation or verification.
+
+## Experience reuse (on demand)
+- After identifying the task, search project `.ai_memory/pitfalls.md` before a relevant tool operation or the first retry. If `AI_EXPERIENCE_DIR` is set, also search its `entries/EXP-*.md`. Read only matching entries; never preload them at startup.
+- After verifying a durable fix, check for duplicates. Record project-specific lessons locally and cross-project lessons as separate files in the shared directory. Do not store secrets, private data or full logs.

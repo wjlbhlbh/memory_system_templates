@@ -54,6 +54,7 @@ The initializer creates:
 - `AGENTS.md` for Codex, OpenCode, Antigravity, and AGENTS.md-compatible tools.
 - `CLAUDE.md` for Claude Code.
 - `search-memory.ps1` for searching archived project memory.
+- Optional shared experience directory for verified lessons reusable across projects and AI tools; project-specific lessons stay in `.ai_memory/pitfalls.md`.
 - `claude-context-health.ps1` for auditing Claude instruction, rule, skill-description, project-memory, and recent-session context costs.
 - `.ai_memory/SETUP_TODO.md` with the few fields you should fill first.
 
@@ -82,6 +83,10 @@ Runtime helpers generated into the target project:
 ```
 
 `compact-memory.ps1` and `migrate-memory.ps1` default to DryRun. Apply mode creates an exact SHA-256 manifest before replacing or upgrading active memory.
+
+### Shared experience across computers
+
+Copy `shared-experience-template/` to a separate synced directory, then keep one `entries/EXP-*.md` file per verified cross-project lesson. On each computer, run the copied `setup-this-machine.ps1` from that computer's local synced directory and restart AI tools. The tool adapters search this directory and the current project's `pitfalls.md` only when the task or a failure calls for it; neither is startup payload. `search-memory.ps1` remains the archive-history search tool. Existing `AGENTS.md` and `CLAUDE.md` files are not replaced by `sync-tool-adapters.ps1` unless `-Force` is explicitly used, so existing projects need a scoped entry-rule update.
 
 Detailed workflow: `docs/REQUIREMENT_LIFECYCLE.md`.
 

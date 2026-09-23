@@ -62,6 +62,7 @@
 - `task-packs/` 只放任务级 required reading、do not read、acceptance、Requirement Checklist 和 handoff，不放无关历史。
 - `history/` 承接早期长日志和过期交接，避免 `activeContext.md` 与 `progress.md` 膨胀。
 - `decisionLog.md`、`backlog.md`、`pitfalls.md`、`interfaces.md`、`architecture.md` 只在确有长期价值或相关改动时更新。
+- 确定任务后，相关操作前和首次失败准备重试时，按关键词搜索项目 `pitfalls.md`；若 `AI_EXPERIENCE_DIR` 已设置，也搜索共享目录 `entries/EXP-*.md`，只读取命中的经验。经验证的跨项目做法写入共享目录独立文件，项目专属经验仍写项目记忆；写前查重，不记录密钥、隐私数据或完整日志。
 - 需要更完整的工程治理细则时，再读取 `engineeringRules.md`。
 ## 10. Requirement lifecycle
 - If `requirements/current.md` is `[UNINITIALIZED]` and the user supplies requirements, a PRD, a requirement list, or a prototype description, initialize the requirement baseline before implementation.

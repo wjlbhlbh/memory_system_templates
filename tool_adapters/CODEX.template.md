@@ -21,3 +21,6 @@ Before work, use state-aware startup:
 ## Requirement lifecycle
 - Initialize `requirements/current.md` on demand when the first real requirement arrives.
 - Latest User Intent Wins; preserve replaced versions as `SUPERSEDED`. Requirement synchronization is not implementation or verification.
+
+## Experience reuse (on demand)
+- Before a relevant operation or the first retry, search `.ai_memory/pitfalls.md` and, when `AI_EXPERIENCE_DIR` is set, its `entries/EXP-*.md`; read only matching entries. Record verified, non-sensitive project lessons locally and cross-project lessons as separate shared files after checking for duplicates.
